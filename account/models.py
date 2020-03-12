@@ -13,3 +13,24 @@ class User(models.Model):
     
     class Meta:
         db_table = 'users'
+
+class Agent(models.Model):
+    name              = models.CharField(max_length = 45)
+    face_name         = models.CharField(max_length = 10)
+    face_number       = models.CharField(max_length = 13)
+    business_id       = models.CharField(max_length = 12)
+    registration_id   = models.CharField(max_length = 16)
+    address           = models.CharField(max_length = 100)
+    profile_image_URL = models.URLField(max_length = 2000)
+    created_at        = models.DateTimeField(auto_now_add = True)
+
+    class Meta:
+        db_table = 'agents'
+
+class BelongedAgent(models.Model):
+    name              = models.CharField(max_length = 10)
+    phone_number      = models.CharField(max_length = 20)
+    agent             = models.ForeignKey(Agent, on_delete = models.CASCADE)
+
+    class Meta:
+        db_table = 'belonged_agents'

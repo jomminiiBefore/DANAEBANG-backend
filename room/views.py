@@ -1,11 +1,13 @@
 import datetime
+from haversine              import haversine
 
-from .models                import Complex, ComplexSpaceInfo, ComplexPriceInfo
+from .models                import Complex, ComplexSpaceInfo, ComplexPriceInfo, EducationInfo, ConvenienceInfo, SafetyInfo
 
 from django.views           import View
 from django.http            import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models       import Avg
+from django.db.models       import Q
 
 class DetailView(View):
     def get(self, request):
@@ -129,3 +131,113 @@ class TradeHistoryView(View):
             return JsonResponse({"result":results}, status = 200)
         except ComplexSpaceInfo.DoesNotExist:
             return JsonResponse({"message":"INVALID_COMPLEXSPACEINFO_ID"}, status = 400)
+
+class NearInfoView(View):
+    def get(self, request):
+        try:
+            longitude = float(request.GET.get('longitude', None))
+            latitude  = float(request.GET.get('latitude', None))
+            position  = (latitude,longitude)
+            condition = (
+                Q(latitude__range  = (latitude - 0.01, latitude + 0.01)) |
+                Q(longitude__range = (longitude - 0.015, longitude + 0.015))
+            )
+
+            convenience_infos = (
+                ConvenienceInfo
+                .objects
+                .filter(condition)
+                .all()
+            )
+            near_convenience_infos = [info for info in convenience_infos
+                                      if haversine(position, (info.latitude, info.longitude)) <= 2]
+
+            safety_infos = (
+                SafetyInfo
+                .objects
+                .filter(condition)
+                .all()
+            )
+            near_safety_infos = [info for info in safety_infos
+                                 if haversine(position, (info.latitude, info.longitude)) <= 2]
+
+            education_infos = (
+                EducationInfo
+                .objects
+                .filter(condition)
+                .all()
+            )
+            near_education_infos = [info for info in education_infos
+                                    if haversine(position, (info.latitude, info.longitude)) <= 2]
+
+            results = {
+                "convenience" : {
+                    "subway" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_convenience_infos
+                        if info.convenience_category_id == 1],
+                    "convenient_store" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_convenience_infos
+                        if info.convenience_category_id == 2],
+                    "bank" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_convenience_infos
+                        if info.convenience_category_id == 4],
+                    "mart" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_convenience_infos
+                        if info.convenience_category_id == 6],
+                    "pharmacy" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_convenience_infos
+                        if info.convenience_category_id == 7]
+                    },
+                "safety" : {
+                    "police" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_safety_infos
+                        if info.safety_category_id == 1],
+                    "cctv" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_safety_infos
+                        if info.safety_category_id == 2]
+                    },
+                "education" : {
+                    "nursery_school" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_education_infos
+                        if info.education_category_id == 1],
+                    "kinder_school" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_education_infos
+                        if info.education_category_id == 2],
+                    "elementary_school" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_education_infos
+                        if info.education_category_id == 3],
+                    "middle_school" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_education_infos
+                        if info.education_category_id == 4],
+                    "high_school" : [{
+                        "name" : info.name,
+                        "position" : (info.latitude, info.longitude)
+                        } for info in near_education_infos
+                        if info.education_category_id == 5]
+                    }
+            }
+            return JsonResponse({"results":results}, status = 200)
+        except ValueError:
+            return JsonResponse({"message":"INVALID_POSITION"}, status = 400)

@@ -19,7 +19,7 @@ class SocialLoginType(models.Model):
     name = models.CharField(max_length = 20)
 
     class Meta:
-        db_table = 'sosial_login_types'
+        db_table = 'social_login_types'
 
 class Agent(models.Model):
     name              = models.CharField(max_length = 45)

@@ -10,7 +10,7 @@ from .models     import (
     HeatType,
     FuelType,
     TradeHistory,
-    TradeType
+    TradeType,
     ConvenienceCategory,
     ConvenienceInfo,
     SafetyCategory,

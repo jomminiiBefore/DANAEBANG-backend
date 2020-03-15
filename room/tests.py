@@ -1,4 +1,8 @@
 import json
+import jwt
+
+from my_settings import SECRET
+from account.models import User
 
 from .models     import (
     Complex,
@@ -16,7 +20,10 @@ from .models     import (
     SafetyCategory,
     SafetyInfo,
     EducationCategory,
-    EducationInfo
+    EducationInfo,
+    RoomType,
+    Floor,
+    MovingDateType
 )
 
 from django.test import TestCase, Client
@@ -641,4 +648,102 @@ class NearInfosTest(TestCase):
     def test_near_info_TypeError(self):
         client   = Client()
         response = client.get('/room/near?latitude=ff&longitude=127.052472')
+        self.assertEqual(response.status_code, 400)
+
+class RoomUploadTest(TestCase):
+    def setUp(self):
+        User.objects.create(
+            name         = 'hyun',
+            email        = 'hyun@email.com',
+            phone_number = '010-0000-0000', 
+        ) 
+        RoomType.objects.create(name = '원룸')
+        HeatType.objects.create(name = '열병합')
+        TradeType.objects.create(name = '전세')
+        Floor.objects.create(name = '1층')
+        MovingDateType.objects.create(name = '즉시입주')
+
+    def tearDown(self):
+        User.objects.all().delete()
+        RoomType.objects.all().delete()
+        HeatType.objects.all().delete()
+        TradeType.objects.all().delete()
+        Floor.objects.all().delete()
+        MovingDateType.objects.all().delete()
+
+    def test_upload_success(self):
+        room = {
+            "is_builtin"          : 0,
+            "is_elevator"         : 0,
+            "is_pet"              : 0,
+            "is_balcony"          : 0,
+            "is_loan"             : 0,
+            "is_parking"          : 0,
+            "address"             : "서울시",
+            "longitude"           : 1.1,
+            "latitude"            : 1.1,
+            "trade_type_id"       : TradeType.objects.get(name = '전세').id,
+            "is_short_lease"      : 0,
+            "room_size"           : 1.1,
+            "provision_size"      : 1.1,
+            "room_floor_id"       : Floor.objects.get(name = '1층').id,
+            "building_floor_id"   : Floor.objects.get(name = '1층').id,
+            "heat_type_id"        : HeatType.objects.get(name = '열병합').id,
+            "moving_date_type_id" : MovingDateType.objects.get(name = '즉시입주').id,
+            "title"               : "title",
+            "description"         : "description",
+            "image_url"           : "url",
+            "fee"                 : [{"deposit":100000, "fee":30}, {"deposit":20000, "fee":40}],
+            "is_maintenance_nego" : 0,
+            "room_type_id"        : RoomType.objects.get(name = '원룸').id
+
+        }
+        user = {
+          'email': 'hyun@email.com'
+        }
+
+        client   = Client()
+        user     = User.objects.get(email = user['email'])
+        token    = jwt.encode({'user_id': user.id}, SECRET['secret'], algorithm = SECRET['algorithm']).decode()
+        headers  = {'HTTP_token':token} 
+        response = client.post('/room/upload', json.dumps(room), content_type='application/json', **headers)
+        self.assertEqual(response.status_code, 200)
+
+    def test_upload_invalid_key(self):
+        room = {
+            "is_builtin_test"     : 0,
+            "is_elevator"         : 0,
+            "is_pet"              : 0,
+            "is_balcony"          : 0,
+            "is_loan"             : 0,
+            "is_parking"          : 0,
+            "address"             : "a",
+            "longitude"           : 1.1,
+            "latitude"            : 1.1,
+            "trade_type_id"       : TradeType.objects.get(name = '전세').id,
+            "is_short_lease"      : 0,
+            "room_size"           : 1.1,
+            "provision_size"      : 1.1,
+            "room_floor_id"       : Floor.objects.get(name = '1층').id,
+            "building_floor_id"   : Floor.objects.get(name = '1층').id,
+            "heat_type_id"        : HeatType.objects.get(name = '열병합').id,
+            "moving_date_type_id" : MovingDateType.objects.get(name = '즉시입주').id,
+            "title"               : "title",
+            "description"         : "description",
+            "image_url"           : "url",
+            "fee_list"            : [{"deposit":100000, "fee":30}, {"deposit":20000, "fee":40}],
+            "user_id"             : User.objects.get(name = 'hyun').id,
+            "is_maintenance_nego" : 0,
+            "room_type_id"        : RoomType.objects.get(name = '원룸').id
+
+        }
+        user = {
+          'email': 'hyun@email.com'
+        }
+
+        client   = Client()
+        user     = User.objects.get(email = user['email'])
+        token    = jwt.encode({'user_id': user.id}, SECRET['secret'], algorithm = SECRET['algorithm']).decode()
+        headers  = {'HTTP_token':token} 
+        response = client.post('/room/upload', json.dumps(room), content_type='application/json', **headers)
         self.assertEqual(response.status_code, 400)

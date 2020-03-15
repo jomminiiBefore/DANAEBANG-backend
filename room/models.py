@@ -207,7 +207,7 @@ class Room(models.Model):
     is_quick            = models.BooleanField(default = False)
     is_confirmed        = models.BooleanField(default = False)
     confirmed_date      = models.DateField(null = True)
-    is_agent            = models.BooleanField(default = False)
+    is_agent            = models.BooleanField(default = False, null=True)
     is_short_lease      = models.BooleanField(default = False)
     title               = models.CharField(max_length = 500, null = True)
     description         = models.CharField(max_length = 10000, null = True)
@@ -231,11 +231,11 @@ class Room(models.Model):
     complex             = models.ForeignKey(Complex, on_delete = models.SET_NULL, null = True)
     complex_space_info  = models.ForeignKey(ComplexSpaceInfo, on_delete = models.SET_NULL, null = True)
     room_add_info       = models.ForeignKey(RoomAddInfo, on_delete = models.SET_NULL, null = True)
-    agent               = models.ForeignKey(Agent, on_delete = models.CASCADE)
-    belonged_agent      = models.ForeignKey(BelongedAgent, on_delete = models.CASCADE)
+    agent               = models.ForeignKey(Agent, on_delete = models.CASCADE, null = True)
+    belonged_agent      = models.ForeignKey(BelongedAgent, on_delete = models.CASCADE, null = True)
     user                = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
     room_like           = models.ManyToManyField(User, through = 'RoomLike', related_name = 'room_like_set')
-    trade_info     = models.ManyToManyField(TradeType, through = 'TradeInfo', related_name = 'trade_info_set')
+    trade_info          = models.ManyToManyField(TradeType, through = 'TradeInfo', related_name = 'trade_info_set')
 
     class Meta:
         db_table = 'rooms'

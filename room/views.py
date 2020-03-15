@@ -1,8 +1,27 @@
+import json
 import datetime
 from haversine              import haversine
 
-from .models                import Complex, ComplexSpaceInfo, ComplexPriceInfo, EducationInfo, ConvenienceInfo, SafetyInfo
-
+from account.my_utils       import requirelogin 
+from .models                import (
+    Complex, 
+    ComplexSpaceInfo, 
+    ComplexPriceInfo, 
+    EducationInfo, 
+    ConvenienceInfo, 
+    SafetyInfo,
+    Room,
+    RoomAddInfo,
+    RoomImage,
+    TradeInfo,
+    MonthlyTradeInfo,
+    RoomType,
+    TradeType,
+    Floor,
+    HeatType,
+    MovingDateType,
+    RoomSubType
+)
 from django.views           import View
 from django.http            import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -241,3 +260,79 @@ class NearInfoView(View):
             return JsonResponse({"results":results}, status = 200)
         except ValueError:
             return JsonResponse({"message":"INVALID_POSITION"}, status = 400)
+
+class RoomUploadView(View):
+    def get(self, request):
+        room_info = {
+            'room_type'        : list(RoomType.objects.values('name')),
+            'trade_type'       : list(TradeType.objects.values('name')),
+            'floor'            : list(Floor.objects.values('name')),
+            'heat_type'        : list(HeatType.objects.values('name')),
+            'moving_date_type' : list(MovingDateType.objects.values('name')),
+            'room_sub_type'    : list(RoomSubType.objects.values('name'))
+        }
+        return JsonResponse(room_info, status = 200)
+        
+    @requirelogin
+    def post(self, request):
+        data = json.loads(request.body)
+        
+        try:
+            fee_list      = data.get('fee_list')
+            deposit_list  = data.get('deposit_list')
+            room_add_info = RoomAddInfo.objects.create(
+                is_builtin  = data['is_builtin'],
+                is_elevator = data['is_elevator'],
+                is_pet      = data['is_pet'],
+                is_balcony  = data['is_balcony'],
+                is_loan     = data['is_loan'],
+                is_parking  = data['is_parking'],
+                parking_fee = data.get('parking_fee')
+            )
+
+            room = Room.objects.create(
+                room_type_id        = data['room_type_id'],
+                address             = data['address'],
+                longitude           = data['longitude'],
+                latitude            = data['latitude'],
+                is_short_lease      = data.get('is_short_lease'),
+                room_size           = data['room_size'],
+                provision_size      = data.get('provision_size'),
+                room_floor_id       = data.get('room_floor_id'),
+                building_floor_id   = data.get('building_floor_id'),
+                heat_type_id        = data.get('heat_type_id'),
+                moving_date_type_id = data.get('moving_date_type_id'),
+                moving_date         = data.get('moving_date'),
+                room_add_info_id    = room_add_info.id,
+                title               = data['title'],
+                description         = data['description'],
+                user_id             = request.user.id,
+                is_maintenance_nego = data['is_maintenance_nego'],
+                maintenance_price   = data.get('maintenance_price')
+            ) 
+
+            RoomImage.objects.create(
+                image_url = data['image_url'],
+                room_id   = room.id
+            )
+
+            if fee_list:
+                for fee in fee_list:
+                    MonthlyTradeInfo.objects.create(
+                        deposit = fee['deposit'],
+                        fee     = fee['fee'],
+                        room_id = room.id
+                    )
+            
+            if deposit_list:
+                for deposit in deposit_list:
+                    TradeInfo.objects.create(
+                        deposit       = deposit['deposit'],
+                        trade_type_id = data.get('trade_type_id'),
+                        room_id       = room.id
+                    )
+              
+            return HttpResponse(status = 200)
+
+        except KeyError:
+            return JsonResponse({'message': 'INVALID_KEY'}, status = 400)

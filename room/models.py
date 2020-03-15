@@ -41,14 +41,14 @@ class Complex(models.Model):
     enter_date         = models.CharField(max_length = 45, null = True)
     household_num      = models.IntegerField(null = True)
     building_num       = models.IntegerField(null = True)
-    parking_average    = models.DecimalField(max_digits = 3, decimal_places = 1)
-    build_cov_ratio    = models.DecimalField(max_digits = 4, decimal_places = 1)
-    floor_area_index   = models.DecimalField(max_digits = 3, decimal_places = 1)
+    parking_average    = models.DecimalField(max_digits = 3, decimal_places = 1, null = True)
+    build_cov_ratio    = models.DecimalField(max_digits = 5, decimal_places = 1, null = True)
+    floor_area_index   = models.DecimalField(max_digits = 5, decimal_places = 1, null = True)
     lowest_floor       = models.IntegerField(null = True)
     highest_floor      = models.IntegerField(null = True)
     provider_name      = models.CharField(max_length = 45)
-    jibun_address      = models.CharField(max_length = 45)
-    road_address       = models.CharField(max_length = 45)
+    jibun_address      = models.CharField(max_length = 45, null = True)
+    road_address       = models.CharField(max_length = 45, null = True)
     complex_type       = models.ForeignKey(ComplexType, on_delete = models.SET_NULL, null = True)
     heat_type          = models.ForeignKey(HeatType, on_delete = models.SET_NULL, null = True)
     fuel_type          = models.ForeignKey(FuelType, on_delete = models.SET_NULL, null = True)
@@ -61,7 +61,7 @@ class Complex(models.Model):
 
 class ComplexImage(models.Model):
     image_url           = models.URLField(max_length = 2000)
-    room                = models.ForeignKey(Complex, on_delete = models.CASCADE)
+    complex                = models.ForeignKey(Complex, on_delete = models.CASCADE)
 
     class Meta:
         db_table = 'complex_images'
@@ -209,17 +209,18 @@ class Room(models.Model):
     confirmed_date      = models.DateField(null = True)
     is_agent            = models.BooleanField(default = False)
     is_short_lease      = models.BooleanField(default = False)
-    title               = models.CharField(max_length = 500)
-    description         = models.CharField(max_length = 4000)
+    title               = models.CharField(max_length = 500, null = True)
+    description         = models.CharField(max_length = 10000, null = True)
     room_size           = models.DecimalField(max_digits = 6, decimal_places = 2)
-    provision_size      = models.DecimalField(max_digits = 6, decimal_places = 2)
-    contract_size       = models.DecimalField(max_digits = 6, decimal_places = 2)
+    provision_size      = models.DecimalField(max_digits = 6, decimal_places = 2, null = True)
+    contract_size       = models.DecimalField(max_digits = 6, decimal_places = 2, null = True)
     room_floor          = models.ForeignKey(Floor, on_delete = models.SET_NULL, null = True, related_name = 'room_floor_set')
     building_floor      = models.ForeignKey(Floor, on_delete = models.SET_NULL, null = True, related_name = 'building_floor_set')
     is_maintenance_nego = models.BooleanField(default = False)
     maintenance_price   = models.IntegerField(null = True)
     longitude           = models.DecimalField(max_digits = 20, decimal_places = 15)
     latitude            = models.DecimalField(max_digits = 20, decimal_places = 15)
+    address             = models.CharField(max_length = 45, null = True)
     heat_type           = models.ForeignKey(HeatType, on_delete = models.SET_NULL, null = True)
     moving_date_type    = models.ForeignKey(MovingDateType, on_delete = models.SET_NULL, null = True)
     moving_date         = models.DateField(null = True)
@@ -229,10 +230,12 @@ class Room(models.Model):
     score               = models.ForeignKey(Score, on_delete = models.SET_NULL, null = True)
     complex             = models.ForeignKey(Complex, on_delete = models.SET_NULL, null = True)
     complex_space_info  = models.ForeignKey(ComplexSpaceInfo, on_delete = models.SET_NULL, null = True)
+    room_add_info       = models.ForeignKey(RoomAddInfo, on_delete = models.SET_NULL, null = True)
     agent               = models.ForeignKey(Agent, on_delete = models.CASCADE)
     belonged_agent      = models.ForeignKey(BelongedAgent, on_delete = models.CASCADE)
-    user                = models.ForeignKey(User, on_delete = models.CASCADE)
+    user                = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
     room_like           = models.ManyToManyField(User, through = 'RoomLike', related_name = 'room_like_set')
+    trade_info     = models.ManyToManyField(TradeType, through = 'TradeInfo', related_name = 'trade_info_set')
 
     class Meta:
         db_table = 'rooms'
@@ -250,7 +253,7 @@ class TradeInfo(models.Model):
     room                = models.ForeignKey(Room, on_delete = models.CASCADE)
 
     class Meta:
-        db_table = 'not_monthly_trade_infos'
+        db_table = 'trade_infos'
 
 class MonthlyTradeInfo(models.Model):
     deposit             = models.IntegerField()

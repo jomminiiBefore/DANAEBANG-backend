@@ -22,6 +22,7 @@ room_info_results = [{
     'is_maintenance_nego' : 'is_maintenance_nego',
     'longitude' : 'longitude',
     'latitude' : 'latitude',
+    'address' : 'address',
     'heat_type' : 'heat_type',
     'moving_date' : 'moving_date',
     'building_use' : 'building_use',
@@ -71,7 +72,7 @@ score_results = [
 with open('./results/01_room_lists.csv', mode = 'r') as room_lists:
     reader = csv.reader(room_lists, delimiter = ',')
 
-    for rooom in list(reader)[1:200]:
+    for rooom in list(reader)[1:9500]:
         room_id  = rooom[0]
         is_quick = rooom[2]
 
@@ -99,6 +100,7 @@ with open('./results/01_room_lists.csv', mode = 'r') as room_lists:
                 'is_maintenance_nego' : room['maintenance_option'],
                 'longitude' : room['location'][0],
                 'latitude' : room['location'][1],
+                'address'  : room['address'],
                 'heat_type' : room['heating'],
                 'moving_date' : room['moving_date'],
                 'building_use' : room['building_use'],
@@ -179,6 +181,7 @@ with open('./results/02_room_info_lists.csv', mode = 'w') as room_info_lists:
                 room['is_maintenance_nego'],
                 room['longitude'],
                 room['latitude'],
+                room['address'],
                 room['heat_type'],
                 room['moving_date'],
                 room['building_use'],

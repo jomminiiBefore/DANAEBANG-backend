@@ -2,13 +2,12 @@ import json
 import jwt
 import bcrypt
 
-from account.models     import User
-from my_settings        import SECRET
+from my_settings    import SECRET
+from account.models import User, SocialLoginType
 
-from django.test        import (
-    TestCase,
-    Client
-)
+from unittest.mock  import patch, MagicMock
+
+from django.test    import TestCase, Client
 
 class SignUpTest(TestCase):
     def setUp(self):
@@ -182,5 +181,62 @@ class SignInTest(TestCase):
         self.assertEqual(response.json(),
             {
                 'message': 'INVALID_EMAIL'
+            }
+        )
+
+class KakaoLoginTest(TestCase):
+    def setUp(self):
+        SocialLoginType.objects.create(name = 'kakao')
+        User.objects.create(
+            name                 = 'hyun',
+            email                = 'hyun@email.com',
+            phone_number         = '010-0000-0000',
+            social_login_id      = '12345678',
+            social_login_type_id = SocialLoginType.objects.get(name = 'kakao').id  
+        )
+        
+    def tearDown(self):
+        User.objects.all().delete()
+        SocialLoginType.objects.all().delete
+        
+    @patch('account.views.requests')
+    def test_kakao_login_true(self, mocked_request):
+        class FakeResponse:
+            def json(self):
+                return {
+                    "id" : '12345678',
+                    "properties" : {"nickname": "이름"},
+                }
+                 
+        mocked_request.get = MagicMock(return_value = FakeResponse())
+        
+        client = Client()
+        header = {'HTTP_Authorization':'fake.token1'}
+        response = client.get('/account/kakao-login', **header, content_type='applications/json')
+        self.assertEqual(response.status_code, 200)
+    
+    @patch('account.views.requests')
+    def test_kakao_login_false(self, mocked_request):
+        class FakeResponse:
+            def json(self):
+                return {
+                    "id" : '857465848',
+                    "properties" : {"nickname": "이름"},
+                }
+                 
+        mocked_request.get = MagicMock(return_value = FakeResponse())
+
+        client = Client()
+        header = {'HTTP_Authorization':'fake.token2'}
+        response = client.get('/account/kakao-login', **header, content_type='applications/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), 
+            {
+                'social_login_data':
+                {
+                    'name'                : '이름',
+                    'social_login_id'     : '857465848',
+                    'social_login_type_id': SocialLoginType.objects.get(name = 'kakao').id
+                }         
             }
         )

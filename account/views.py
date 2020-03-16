@@ -43,12 +43,12 @@ class SignUpView(View):
                     password = None
 
                 User.objects.create(
-                    name              = data['name'],
-                    email             = data['email'],
-                    password          = password,
-                    phone_number      = data['phone_number'],
-                    social_login_id   = social_login_id,
-                    social_login_type = data.get('social_login_type', None) 
+                    name                 = data['name'],
+                    email                = data['email'],
+                    password             = password,
+                    phone_number         = data['phone_number'],
+                    social_login_id      = social_login_id,
+                    social_login_type_id = data.get('social_login_type_id', None) 
                 )
 
                 user  = user_check.get()

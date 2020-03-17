@@ -1,12 +1,12 @@
 import json
+import json
 import jwt
 import bcrypt
 
 from my_settings    import SECRET
-from account.models import User, SocialLoginType
+from account.models     import User, SocialLoginType
 
 from unittest.mock  import patch, MagicMock
-
 from django.test    import TestCase, Client
 
 class SignUpTest(TestCase):
@@ -192,7 +192,7 @@ class KakaoLoginTest(TestCase):
             email                = 'hyun@email.com',
             phone_number         = '010-0000-0000',
             social_login_id      = '12345678',
-            social_login_type_id = SocialLoginType.objects.get(name = 'kakao').id  
+            social_login_type_id = SocialLoginType.objects.get(name = 'kakao').id
         )
         
     def tearDown(self):
@@ -237,6 +237,70 @@ class KakaoLoginTest(TestCase):
                     'name'                : '이름',
                     'social_login_id'     : '857465848',
                     'social_login_type_id': SocialLoginType.objects.get(name = 'kakao').id
-                }         
+                }
+            }
+        )
+
+class FacebookSignInViewTest(TestCase):
+    def setUp(self):
+        SocialLoginType.objects.create(name = 'facebook')
+        User.objects.create(
+            name                = 'testname',
+            email               = 'test@gmail.com',
+            phone_number        = '010-1234-5678',
+            social_login_id     = '3187176975214272',
+            social_login_type   = SocialLoginType.objects.get(name = 'facebook')
+        )
+    
+    def tearDown(self):
+        User.objects.all().delete()
+        SocialLoginType.objects.all().delete()
+
+    @patch('account.views.requests')
+    def test_facebook_signin_view_exists(self, mocked_request):
+        class FakeResponse:
+            def json(self):
+                return {
+                    'id'    : '3187176975214272',
+                    'name'  : 'testname',
+                }
+
+        mocked_request.get  = MagicMock(return_value = FakeResponse())
+        client              = Client()
+        header              = {'HTTP_Authorization' : 'fake.access_token'}
+        response            = client.get(
+            '/account/facebook-signin',
+            content_type = 'applications/json',
+            **header
+        )
+        
+        self.assertEqual(response.status_code, 200)
+
+    @patch('account.views.requests')
+    def test_facebook_signin_view_not_exists(self, mocked_request):
+        class FakeResponse:
+            def json(self):
+                return {
+                    'id'    : '1293858102939103',
+                    'name'  : 'helloman'
+                }
+
+        mocked_request.get  = MagicMock(return_value = FakeResponse())
+        client              = Client()
+        header              = {'HTTP_Authorization' : 'fake.access_token2'}
+        response            = client.get(
+            '/account/facebook-signin',
+            content_type = 'applications/json',
+            **header
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+            {
+                'social_login_data': {
+                    'name'                  : 'helloman',
+                    'social_login_id'       : '1293858102939103',
+                    'social_login_type_id'  :  SocialLoginType.objects.get(name = 'facebook').id
+                }
             }
         )

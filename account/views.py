@@ -5,18 +5,12 @@ import re
 import requests
 
 from my_settings            import SECRET
-from .models                import (
-    User,
-    SocialLoginType
-)
+from .models                import User, SocialLoginType
 
 from django.views           import View
 from django.core.validators import validate_email
 from django.core.validators import ValidationError
-from django.http            import (
-    JsonResponse,
-    HttpResponse
-)
+from django.http            import JsonResponse, HttpResponse
 
 PASSWORD_VALIDATION = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_])[A-Za-z\d!@#$%^&*()_]{8,}$'
 
@@ -136,3 +130,46 @@ class KakaoLoginView(View):
             'social_login_type_id': social_login_type.id
         }
         return JsonResponse({'social_login_data': social_login_data}, status = 200)
+
+class FacebookSignInView(View):
+    def get(self, request):
+        facebook_token              = request.headers.get('Authorization')
+        facebook_url_user_info      = 'https://graph.facebook.com/v6.0/me'
+        user_info_fields            = ['id', 'name']
+        param_user_info             = {
+            'fields'        : ','.join(user_info_fields),
+            'access_token'  : facebook_token
+        }
+        
+        facebook            = SocialLoginType.objects.get(name = 'facebook')
+        facebook_user_info  = requests.get(facebook_url_user_info, params = param_user_info)
+        facebook_id         = facebook_user_info.json().get('id')
+        facebook_name       = facebook_user_info.json().get('name')
+        user_check          = User.objects.filter(social_login_type = facebook, social_login_id = facebook_id)
+        
+        try:
+            if user_check.exists():
+                user    = (
+                    User
+                    .objects
+                    .get(social_login_type = facebook, social_login_id = facebook_id)
+                )
+                token   = jwt.encode(
+                    {'email': user.email},
+                    SECRET['secret'],
+                    algorithm = SECRET['algorithm'],
+                )
+
+                return JsonResponse({'token':token.decode('utf-8')}, status = 200)
+            
+            social_login_type = SocialLoginType.objects.get(name = 'facebook')
+            social_login_data = {
+                'name'                  : facebook_name,
+                'social_login_id'       : facebook_id,
+                'social_login_type_id'  : social_login_type.id
+            }
+            
+            return JsonResponse({'social_login_data' : social_login_data}, status = 200)
+
+        except KeyError:
+           return JsonResponse({'message' : 'INVALID_KEYS'}, status = 400)

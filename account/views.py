@@ -155,7 +155,7 @@ class FacebookSignInView(View):
                     .get(social_login_type = facebook, social_login_id = facebook_id)
                 )
                 token   = jwt.encode(
-                    {'email': user.email},
+                    {'user_id': user.id},
                     SECRET['secret'],
                     algorithm = SECRET['algorithm'],
                 )

@@ -2,26 +2,9 @@ import json
 import datetime
 from haversine              import haversine
 
-from account.my_utils       import requirelogin 
-from .models                import (
-    Complex, 
-    ComplexSpaceInfo, 
-    ComplexPriceInfo, 
-    EducationInfo, 
-    ConvenienceInfo, 
-    SafetyInfo,
-    Room,
-    RoomAddInfo,
-    RoomImage,
-    TradeInfo,
-    MonthlyTradeInfo,
-    RoomType,
-    TradeType,
-    Floor,
-    HeatType,
-    MovingDateType,
-    RoomSubType
-)
+from account.my_utils       import requirelogin
+from .models                import *
+
 from django.views           import View
 from django.http            import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -45,6 +28,8 @@ class DetailView(View):
                     'parking_average'                   : complex.parking_average,
                     'building_num'                      : complex.building_num,
                     'heat_type'                         : complex.heat_type.name,
+                    'fuel_type'                         : complex.fuel_type.name,
+                    'provider_name'                     : complex.provider_name,
                     'lowest_floor'                      : complex.lowest_floor,
                     'highest_floor'                     : complex.highest_floor,
                     'entrance_type'                     : complex.entrance_type.name,

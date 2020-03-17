@@ -4,30 +4,9 @@ import jwt
 from my_settings import SECRET
 from account.models import User
 
-from .models     import (
-    Complex,
-    ComplexImage,
-    ComplexPriceInfo,
-    ComplexSpaceInfo,
-    ComplexType,
-    EntranceType,
-    HeatType,
-    FuelType,
-    TradeHistory,
-    TradeType,
-    ConvenienceCategory,
-    ConvenienceInfo,
-    SafetyCategory,
-    SafetyInfo,
-    EducationCategory,
-    EducationInfo,
-    RoomType,
-    Floor,
-    MovingDateType
-)
+from .models     import *
 
 from django.test import TestCase, Client
-
 class DetailTest(TestCase):
     maxDiff = None
     def setUp(self):
@@ -42,6 +21,10 @@ class DetailTest(TestCase):
         HeatType.objects.create(
             id = 3,
             name = '중앙난방'
+        )
+        FuelType.objects.create(
+            id = 1,
+            name = '도시가스'
         )
         price_info = ComplexPriceInfo.objects.create(
             trade_average_pyeong_price        = None,
@@ -59,6 +42,8 @@ class DetailTest(TestCase):
             parking_average    = "0.3",
             building_num       = 1,
             heat_type_id       = 3,
+            fuel_type_id       = 1,
+            provider_name      = '대성산업',
             lowest_floor       = 9,
             highest_floor      = 9,
             entrance_type_id   = 1,
@@ -147,6 +132,8 @@ class DetailTest(TestCase):
                                 "parking_average": "0.3",
                                 "building_num": 1,
                                 "heat_type": "중앙난방",
+                                "fuel_type": "도시가스",
+                                "provider_name": "대성산업",
                                 "lowest_floor": 9,
                                 "highest_floor": 9,
                                 "entrance_type": "계단식",

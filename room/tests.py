@@ -1,8 +1,9 @@
 import json
 import jwt
+import datetime
 
-from my_settings      import SECRET, SMS
-from account.models   import User
+from my_settings      import SECRET
+from account.models   import User, Agent, BelongedAgent
 from .models          import *
 
 from django.db.models import Q
@@ -22,6 +23,10 @@ class DetailTest(TestCase):
         HeatType.objects.create(
             id = 3,
             name = '중앙난방'
+        )
+        HeatType.objects.create(
+            id      = 1,
+            name    = '개별난방'
         )
         FuelType.objects.create(
             id = 1,
@@ -116,6 +121,514 @@ class DetailTest(TestCase):
             lay_out_image_URL       = None,
             extend_lay_out_image_URL= None
         )
+        ComplexSpaceInfo.objects.create(
+            complex                 = complex,
+            id                      = 2642,
+            pyeong_type             = "22",
+            room_size               = "18.36",
+            provision_size          = None,
+            contract_size           = "22.03",
+            maintenance_price       = None,
+            beds_num                = 1,
+            bath_num                = 1,
+            entrance_type_id        = 1,
+            lay_out_image_URL       = None,
+            extend_lay_out_image_URL= None
+        )
+        Agent.objects.create(
+            id                  = 1,
+            name                = '부동산부동산',
+            face_name           = '얼굴이름',
+            face_number         = '02-1234-5678',
+            business_id         = '123-567-8901',
+            registration_id     = '12345-2020-12345',
+            address             = '서울특별시 강남구 역삼동 123-45',
+            profile_image_URL   = 'https://s3.ap-northeast-2.amazonaws.com/cdn.wecode.co.kr/logo/wecode_logo_bk.png'
+        )
+        BelongedAgent.objects.create(
+            id              = 5,
+            name            = '가나다',
+            phone_number    = '010-1234-5678',
+            agent_id        = 1
+        )
+        Floor.objects.create(
+            id      = 2,
+            name    = '2층'
+        )
+        Floor.objects.create(
+            id      = 4,
+            name    = '4층'
+        )
+        Floor.objects.create(
+            id      = 5,
+            name    = '5층'
+        )
+        Floor.objects.create(
+            id      = 7,
+            name    = '7층'
+        )
+        MovingDateType.objects.create(
+            id      = 1,
+            name    = '즉시입주'
+        )
+        MovingDateType.objects.create(
+            id      = 2,
+            name    = '날짜 협의'
+        )
+        RoomType.objects.create(
+            id      = 1,
+            name    = '원룸'
+        )
+        RoomType.objects.create(
+            id      = 5,
+            name    = '아파트'
+        )
+        RoomSubType.objects.create(
+            id      = 2,
+            name    = '주방분리형'
+        )
+        Score.objects.create(
+            id          = 5,
+            price       = "61.25",
+            option      = "75.00",
+            near        = "100.00",
+            maintenance = "70.00",
+            traffic     = "40.00"
+        )
+        RoomAddInfo.objects.create(
+            id          = 5,
+            is_builtin  = False,
+            is_elevator = False,
+            is_pet      = False,
+            is_balcony  = False,
+            is_loan     = True,
+            is_parking  = True,
+            parking_fee = 10
+        )
+        RoomAddInfo.objects.create(
+            id          = 4796,
+            is_builtin  = False,
+            is_elevator = True,
+            is_pet      = False,
+            is_balcony  = False,
+            is_loan     = False,
+            is_parking  = False,
+            parking_fee = None
+        )
+        room = Room.objects.create(
+            id                  = 5,
+            is_quick            = True,
+            is_confirmed        = False,
+            confirmed_date      = None,
+            is_agent            = True,
+            is_short_lease      = False,
+            title               = '아주 싸고 좋은 방 매물 나왔습니다',
+            description         = '이 지역에서 다시 찾아볼 수 없는 매물입니다. 지금 계약하세요',
+            room_size           = "16.52",
+            provision_size      = "26.44",
+            contract_size       = None,
+            room_floor_id       = 2,
+            building_floor_id   = 4,
+            is_maintenance_nego = False,
+            maintenance_price   = 10,
+            longitude           = '126.939314200000000',
+            latitude            = '37.480024180000000',
+            address             = '서울특별시 관악구 봉천동',
+            heat_type_id        = 1,
+            moving_date_type_id = 1,
+            moving_date         = None,
+            building_use_id     = None,
+            room_type_id        = 1,
+            room_sub_type_id    = 2,
+            score_id            = 5,
+            complex_id          = None,
+            complex_space_info  = None,
+            room_add_info_id    = 5,
+            agent_id            = 1,
+            belonged_agent_id   = 5,
+            user_id             = None
+        )
+        room_image_urls = [
+            "https://d1774jszgerdmk.cloudfront.net/1024/40e1fab9-46ad-484b-9c9a-9885bf2917cd",
+            "https://d1774jszgerdmk.cloudfront.net/1024/581fadaa-442f-41c3-a17e-d7e9bd312731",
+        ]
+        for image in room_image_urls:
+            RoomImage.objects.create(
+                image_url   = image,
+                room        = room
+            )
+        room_complex = Room.objects.create(
+            id                      = 4796,
+            is_quick                = True,
+            is_confirmed            = False,
+            confirmed_date          = datetime.date(2020, 3, 2),
+            is_agent                = True,
+            is_short_lease          = False,
+            title                   = '동대문의 명물이 되겠습니다',
+            description             = '안녕하세요 부동산부동산에서 전해드리는 매물입니다.',
+            room_size               = "18.36",
+            provision_size          = None,
+            contract_size           = None,
+            room_floor_id           = 5,
+            building_floor_id       = 7,
+            is_maintenance_nego     = False,
+            maintenance_price       = 10,
+            longitude               = '126.959238700000000',
+            latitude                = '37.482058200000000',
+            address                 = '서울시 동대문구 휘경동',
+            heat_type_id            = 1,
+            moving_date_type_id     = 2,
+            moving_date             = None,
+            building_use_id         = None,
+            room_type_id            = 5,
+            room_sub_type_id        = 2,
+            score_id                = None,
+            complex_id              = 5,
+            complex_space_info_id   = 2642,
+            room_add_info_id        = 4796,
+            agent_id                = 1,
+            belonged_agent_id       = 5,
+            user_id                 = None
+        )
+        room_complex_image_urls = [
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png"
+        ]
+        for image in room_complex_image_urls:
+            RoomImage.objects.create(
+                image_url   = image,
+                room        = room_complex
+            )
+        TradeType.objects.create(
+            id      = 1,
+            name    = '월세'
+        )
+        TradeType.objects.create(
+            id      = 2,
+            name    = '전세'
+        )
+        TradeType.objects.create(
+            id      = 3,
+            name    = '매매'
+        )
+        TradeInfo.objects.create(
+            id              = 15,
+            deposit         = 500,
+            fee             = 35,
+            trade_type_id   = 1,
+            room_id         = 5
+        )
+        TradeInfo.objects.create(
+            id              = 9258,
+            deposit         = 5500,
+            fee             = 0,
+            trade_type_id   = 2,
+            room_id         = 5
+        )
+        TradeInfo.objects.create(
+            id              = 13186,
+            deposit         = 45000,
+            fee             = 0,
+            trade_type_id   = 3,
+            room_id         = 4796
+        )
+
+        
+    def test_room_detail_success(self):
+        client   = Client()
+        response = client.get('/room/detail?type=room&id=5')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+                             'room_detail': {
+                                 'room_id': '5',
+                                 'room_type': '원룸',
+                                 'room_sub_type': '주방분리형',
+                                 'is_confirmed': False,
+                                 'confirmed_date': None,
+                                 'is_short_lease': False,
+                                 'title': '아주 싸고 좋은 방 매물 나왔습니다',
+                                 'description': '이 지역에서 다시 찾아볼 수 없는 매물입니다. 지금 계약하세요',
+                                 'room_size': '16.52',
+                                 'provision_size': '26.44',
+                                 'contract_size': None,
+                                 'room_floor': '2층',
+                                 'building_floor': '4층',
+                                 'maintenance_price': 10,
+                                 'address': '서울특별시 관악구 봉천동',
+                                 'heat_type': '개별난방',
+                                 'moving_date_type': '즉시입주',
+                                 'moving_date': None,
+                                 'building_use': None,
+                                 'image_urls': [
+                                     'https://d1774jszgerdmk.cloudfront.net/1024/40e1fab9-46ad-484b-9c9a-9885bf2917cd',
+                                     'https://d1774jszgerdmk.cloudfront.net/1024/581fadaa-442f-41c3-a17e-d7e9bd312731'
+                                 ],
+                                 'room_add_info': {
+                                     'is_builtin': False,
+                                     'is_elevator': False,
+                                     'is_pet': False,
+                                     'is_balcony': False,
+                                     'is_loan': True,
+                                     'is_parking': True,
+                                     'parking_fee': 10
+                                 },
+                                 'score': {
+                                     'price': '61.25',
+                                     'option': '75.00',
+                                     'near': '100.00',
+                                     'maintenance': '70.00',
+                                     'traffic': '40.00'
+                                 },
+                                 'agent': {
+                                     'name': '부동산부동산',
+                                     'face_name': '얼굴이름',
+                                     'face_number': '02-1234-5678',
+                                     'address': '서울특별시 강남구 역삼동 123-45'
+                                 },
+                                 'belonged_agent': {
+                                     'name': '가나다',
+                                     'phone_number': '010-1234-5678'
+                                 },
+                                 'trade_infos': [
+                                     {
+                                         'trade_info_name': '월세',
+                                         'deposit': 500,
+                                         'fee': 35
+                                     },
+                                     {
+                                         'trade_info_name': '전세',
+                                         'deposit': 5500,
+                                         'fee': 0
+                                     }
+                                 ]
+                             }
+                         }
+                     )
+
+    def test_room_complex_detail_success(self):
+        client   = Client()
+        response = client.get('/room/detail?type=room&id=4796')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+                             'room_detail': {
+                                'room_id': '4796',
+                                'room_type': '아파트',
+                                'room_sub_type': '주방분리형',
+                                'is_confirmed': False,
+                                'confirmed_date': '2020-03-02',
+                                'is_short_lease': False,
+                                'title': '동대문의 명물이 되겠습니다',
+                                'description': '안녕하세요 부동산부동산에서 전해드리는 매물입니다.',
+                                'room_size': '18.36',
+                                'provision_size': None,
+                                'contract_size': None,
+                                'room_floor': '5층',
+                                'building_floor': '7층',
+                                'maintenance_price': 10,
+                                'address': '서울시 동대문구 휘경동',
+                                'heat_type': '개별난방',
+                                'moving_date_type': '날짜 협의',
+                                'moving_date': None,
+                                'building_use': None,
+                                'image_urls': ['https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png'],
+                                'room_add_info': {
+                                     'is_builtin': False,
+                                     'is_elevator': True,
+                                     'is_pet': False,
+                                     'is_balcony': False,
+                                     'is_loan': False,
+                                     'is_parking': False,
+                                     'parking_fee': None
+                                 },
+                                 'score': {
+                                     'price': None,
+                                     'option': None,
+                                     'near': None,
+                                     'maintenance': None,
+                                     'traffic': None
+                                 },
+                                 'agent': {
+                                     'name': '부동산부동산',
+                                     'face_name': '얼굴이름',
+                                     'face_number': '02-1234-5678',
+                                     'address': '서울특별시 강남구 역삼동 123-45'
+                                 },
+                                 'belonged_agent': {
+                                     'name': '가나다',
+                                     'phone_number': '010-1234-5678'
+                                 },
+                                 'trade_infos': [
+                                     {
+                                         'trade_info_name': '매매',
+                                         'deposit': 45000,
+                                         'fee': 0
+                                     }
+                                 ],
+                                 'complex': {
+                                    'complex_id': 5,
+                                    'complex_name': '휘경코업레지던스',
+                                    'enter_date': '2002.12 준공',
+                                    'household_num': 132,
+                                    'parking_average': '0.3'
+                                 },
+                                 'pyeong_infos': {
+                                    'complex_space_info_id': 2642,
+                                    'beds_num': 1,
+                                    'bath_num': 1,
+                                    'entrance_type': '계단식',
+                                    'lay_out_image_URL': None
+                                 }
+                             }
+                         }
+                     )
+
+    def test_room_detail_wrong_result(self):
+        client   = Client()
+        response = client.get('/room/detail?type=room&id=5')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.json(),
+                         {
+                             'room_detail': {
+                                 'room_id': '6',
+                                 'room_type': '원룸',
+                                 'room_sub_type': '주방분리형',
+                                 'is_confirmed': False,
+                                 'confirmed_date': None,
+                                 'is_short_lease': False,
+                                 'title': '아주 싸고 좋은 방 매물 나왔습니다',
+                                 'description': '이 지역에서 다시 찾아볼 수 없는 매물입니다. 지금 계약하세요',
+                                 'room_size': '16.52',
+                                 'provision_size': '26.44',
+                                 'contract_size': None,
+                                 'room_floor': '2층',
+                                 'building_floor': '4층',
+                                 'maintenance_price': 10,
+                                 'address': '서울특별시 관악구 봉천동',
+                                 'heat_type': '개별난방',
+                                 'moving_date_type': '즉시입주',
+                                 'moving_date': None,
+                                 'building_use': None,
+                                 'image_urls': [
+                                     'https://d1774jszgerdmk.cloudfront.net/1024/40e1fab9-46ad-484b-9c9a-9885bf2917cd',
+                                     'https://d1774jszgerdmk.cloudfront.net/1024/581fadaa-442f-41c3-a17e-d7e9bd312731'
+                                 ],
+                                 'room_add_info': {
+                                     'is_builtin': False,
+                                     'is_elevator': False,
+                                     'is_pet': False,
+                                     'is_loan': True,
+                                     'is_parking': True,
+                                     'parking_fee': 10
+                                 },
+                                 'score': {
+                                     'price': '61.25',
+                                     'option': '75.00',
+                                     'near': '100.00',
+                                     'maintenance': '70.00',
+                                     'traffic': '40.00'
+                                 },
+                                 'agent': {
+                                     'name': '부동산부동산',
+                                     'face_name': '얼굴이름',
+                                     'face_number': '02-1234-5678',
+                                     'address': '서울특별시 강남구 역삼동 123-45'
+                                 },
+                                 'belonged_agent': {
+                                     'name': '가나다',
+                                     'phone_number': '010-1234-5678'
+                                 },
+                                 'trade_infos': [
+                                     {
+                                         'deposit': 500,
+                                         'fee': 35
+                                     },
+                                     {
+                                         'deposit': 5500,
+                                         'fee': 0
+                                     }
+                                 ]
+                             }
+                         }
+                     )
+
+    def test_room_complex_detail_wrong_result(self):
+        client   = Client()
+        response = client.get('/room/detail?type=room&id=4796')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.json(),
+                         {
+                             'room_detail': {
+                                'room_id': '4797',
+                                'room_type': '아파트',
+                                'room_sub_type': '주방분리형',
+                                'is_confirmed': False,
+                                'confirmed_date': '2020-03-02',
+                                'is_short_lease': False,
+                                'title': '동대문의 명물이 되겠습니다',
+                                'description': '안녕하세요 부동산부동산에서 전해드리는 매물입니다.',
+                                'room_size': '18.36',
+                                'provision_size': None,
+                                'contract_size': None,
+                                'room_floor': '5층',
+                                'building_floor': '7층',
+                                'maintenance_price': 10,
+                                'address': '서울시 동대문구 휘경동',
+                                'heat_type': '개별난방',
+                                'moving_date_type': '날짜 협의',
+                                'moving_date': None,
+                                'building_use': None,
+                                'image_urls': ['https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png'],
+                                'room_add_info': {
+                                     'is_builtin': False,
+                                     'is_elevator': True,
+                                     'is_pet': False,
+                                     'is_balcony': False,
+                                     'is_loan': False,
+                                     'is_parking': False,
+                                     'parking_fee': None
+                                 },
+                                 'score': {
+                                     'price': None,
+                                     'option': None,
+                                     'near': None,
+                                     'maintenance': None,
+                                     'traffic': None
+                                 },
+                                 'agent': {
+                                     'name': '부동산부동산',
+                                     'face_name': '얼굴이름',
+                                     'face_number': '02-1234-5678',
+                                     'address': '서울특별시 강남구 역삼동 123-45'
+                                 },
+                                 'belonged_agent': {
+                                     'name': '가나다',
+                                     'phone_number': '010-1234-5678'
+                                 },
+                                 'trade_infos': [
+                                     {
+                                         'trade_info_name': '매매',
+                                         'deposit': 45000,
+                                         'fee': 0
+                                     }
+                                 ],
+                                 'complex': {
+                                    'complex_name': '휘경코업레지던스',
+                                    'enter_date': '2002.12 준공',
+                                    'household_num': 132,
+                                    'parking_average': '0.3'
+                                 },
+                                 'pyeong_infos': {
+                                    'beds_num': 1,
+                                    'bath_num': 1,
+                                    'entrance_type': '계단식',
+                                    'lay_out_image_URL': None
+                                 }
+                             }
+                         }
+                     )
+
+
 
     def test_complex_detail_success(self):
         client   = Client()
@@ -191,6 +704,19 @@ class DetailTest(TestCase):
                                         "complex_space_info_id": 1834,
                                         "pyeong_type": "22",
                                         "room_size": "13.86",
+                                        "provision_size": None,
+                                        "contract_size": "22.03",
+                                        "maintenance_price": None,
+                                        "beds_num": 1,
+                                        "bath_num": 1,
+                                        "entrance_type": "계단식",
+                                        "lay_out_image_URL": None,
+                                        "extend_lay_out_image_URL": None
+                                    },
+                                    {
+                                        "complex_space_info_id": 2642,
+                                        "pyeong_type": "22",
+                                        "room_size": "18.36",
                                         "provision_size": None,
                                         "contract_size": "22.03",
                                         "maintenance_price": None,
@@ -280,6 +806,18 @@ class DetailTest(TestCase):
                                         "entrance_type": "계단식",
                                         "lay_out_image_URL": None,
                                         "extend_lay_out_image_URL": None
+                                    },
+                                    {
+                                        "pyeong_type": "22",
+                                        "room_size": "18.36",
+                                        "provision_size": None,
+                                        "contract_size": "22.03",
+                                        "maintenance_price": None,
+                                        "beds_num": 1,
+                                        "bath_num": 1,
+                                        "entrance_type": "계단식",
+                                        "lay_out_image_URL": None,
+                                        "extend_lay_out_image_URL": None
                                     }
                                 ]
                             }
@@ -289,6 +827,11 @@ class DetailTest(TestCase):
     def test_complex_detail_invalid_complex_id(self):
         client   = Client()
         response = client.get('/room/detail?type=complex&id=5000')
+        self.assertEqual(response.status_code, 400)
+    
+    def test_room_detail_invalid_room_id(self):
+        client   = Client()
+        response = client.get('/room/detail?type=room&id=5000')
         self.assertEqual(response.status_code, 400)
 
 class TradeHistoryTest(TestCase):

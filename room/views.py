@@ -54,10 +54,111 @@ class DetailView(View):
                         } for pyeong in complex.complexspaceinfo_set.all()]
                     }
                 return JsonResponse({"complex_detail": complex_detail}, status = 200)
-            else:
-                pass
+            
+            elif type == 'room':
+                room = (
+                    Room
+                    .objects
+                    .select_related('room_add_info', 'score', 'agent', 'belonged_agent')
+                    .get(id = id)
+                )
+                trade_info = (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = id)
+                    .all()
+                    .values('deposit', 'fee', 'trade_type_id__name')
+                )
+
+                room_detail = {
+                    'room_id'           : id,
+                    'room_type'         : room.room_type.name,
+                    'room_sub_type'     : room.room_sub_type.name,
+                    'is_confirmed'      : room.is_confirmed,
+                    'confirmed_date'    : room.confirmed_date,
+                    'is_short_lease'    : room.is_short_lease,
+                    'title'             : room.title,
+                    'description'       : room.description,
+                    'room_size'         : room.room_size,
+                    'provision_size'    : room.provision_size,
+                    'contract_size'     : room.contract_size,
+                    'room_floor'        : room.room_floor.name,
+                    'building_floor'    : room.building_floor.name,
+                    'maintenance_price' : room.maintenance_price,
+                    'address'           : room.address,
+                    'heat_type'         : room.heat_type.name,
+                    'moving_date_type'  : room.moving_date_type.name,
+                    'moving_date'       : room.moving_date,
+                    'building_use'      : room.building_use.name if room.building_use else None,
+                    'image_urls'        : [image.image_url for image in room.roomimage_set.all()],
+                    'room_add_info'     : {
+                        'is_builtin'    : room.room_add_info.is_builtin,
+                        'is_elevator'   : room.room_add_info.is_elevator,
+                        'is_pet'        : room.room_add_info.is_pet,
+                        'is_balcony'    : room.room_add_info.is_balcony,
+                        'is_loan'       : room.room_add_info.is_loan,
+                        'is_parking'    : room.room_add_info.is_parking,
+                        'parking_fee'   : room.room_add_info.parking_fee,
+                    },
+                    'score'             : {
+                        'price'         : room.score.price if room.score else None,
+                        'option'        : room.score.option if room.score else None,
+                        'near'          : room.score.near if room.score else None,
+                        'maintenance'   : room.score.maintenance if room.score else None,
+                        'traffic'       : room.score.traffic if room.score else None,
+                    },
+                    'agent'             : {
+                        'name'          : room.agent.name,
+                        'face_name'     : room.agent.face_name,
+                        'face_number'   : room.agent.face_number,
+                        'address'       : room.agent.address,
+                    },
+                    'belonged_agent'    : {
+                        'name'          : room.belonged_agent.name,
+                        'phone_number'  : room.belonged_agent.phone_number,
+                    },
+                    'trade_infos'       : [
+                        {
+                            'trade_info_name'   : trade.get('trade_type_id__name'),
+                            'deposit'           : trade.get('deposit'),
+                            'fee'               : trade.get('fee')
+                        } for trade in trade_info
+                    ]
+                }
+
+                if room.complex:
+                    room_detail['complex'] = {
+                        'complex_id'        : room.complex.id,
+                        'complex_name'      : room.complex.name,
+                        'enter_date'        : room.complex.enter_date,
+                        'household_num'     : room.complex.household_num,
+                        'parking_average'   : room.complex.parking_average
+                    }
+                    pyeong = (
+                        room
+                        .complex
+                        .complexspaceinfo_set.get(
+                            room_size = room.room_size,
+                            provision_size = room.provision_size
+                        )
+                    )
+                    room_detail['pyeong_infos'] = {
+                            'complex_space_info_id'    : pyeong.id,
+                            'beds_num'                 : pyeong.beds_num,
+                            'bath_num'                 : pyeong.bath_num,
+                            'entrance_type'            : pyeong.entrance_type.name,
+                            'lay_out_image_URL'        : pyeong.lay_out_image_URL,
+                    }
+
+                return JsonResponse({"room_detail" : room_detail}, status = 200)
+            
+            return HttpResponse(status = 400)
+        
         except Complex.DoesNotExist:
             return JsonResponse({"message": "INVALID_COMPLEX_ID"}, status = 400)
+        
+        except Room.DoesNotExist:
+            return JsonResponse({"message" : "INVALID_ROOM_ID"}, status = 400)
 
 class TradeHistoryView(View):
     def get(self, request):
@@ -418,7 +519,7 @@ class RoomListView(View):
         try:
             like         = request.GET.get('like')
             offset       = int(request.GET.get('offset', None)) - 1
-            limit        = int(request.GET.get('limit', None)) 
+            limit        = int(request.GET.get('limit', None))
             room_id      = request.GET.getlist('room_id', None)
 
             if like:

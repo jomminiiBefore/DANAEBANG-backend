@@ -257,13 +257,24 @@ class RoomUploadView(View):
         }
         return JsonResponse(room_info, status = 200)
 
+class RoomUploadView(View):
+    def get(self, request):
+        room_info = {
+            'room_type'        : list(RoomType.objects.values()),
+            'trade_type'       : list(TradeType.objects.values()),
+            'floor'            : list(Floor.objects.values()),
+            'heat_type'        : list(HeatType.objects.values()),
+            'moving_date_type' : list(MovingDateType.objects.values()),
+            'room_sub_type'    : list(RoomSubType.objects.values())
+        }
+        return JsonResponse(room_info, status = 200)
+
     @requirelogin
     def post(self, request):
         data = json.loads(request.body)
 
         try:
-            fee_list      = data.get('fee_list')
-            deposit_list  = data.get('deposit_list')
+            trade_infos   = data.get('trade_info')
             room_add_info = RoomAddInfo.objects.create(
                 is_builtin  = data['is_builtin'],
                 is_elevator = data['is_elevator'],
@@ -300,14 +311,14 @@ class RoomUploadView(View):
                 room_id   = room.id
             )
 
-            if deposit_list:
-                for deposit in deposit_list:
-                    TradeInfo.objects.create(
-                        deposit       = deposit['deposit'],
-                        trade_type_id = data.get('trade_type_id'),
-                        room_id       = room.id
-                    )
-
+            for trade_info in trade_infos:
+                TradeInfo.objects.create(
+                    trade_type_id = trade_info.get('trade_type_id'),
+                    deposit       = trade_info['deposit'],
+                    fee           = trade_info.get('fee'),
+                    room_id       = room.id
+                )
+            
             return HttpResponse(status = 200)
 
         except KeyError:

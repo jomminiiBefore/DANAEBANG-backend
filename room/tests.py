@@ -668,7 +668,6 @@ class RoomUploadTest(TestCase):
             "address"             : "서울시",
             "longitude"           : 1.1,
             "latitude"            : 1.1,
-            "trade_type_id"       : TradeType.objects.get(name = '전세').id,
             "is_short_lease"      : 0,
             "room_size"           : 1.1,
             "provision_size"      : 1.1,
@@ -679,7 +678,9 @@ class RoomUploadTest(TestCase):
             "title"               : "title",
             "description"         : "description",
             "image_url"           : "url",
-            "fee"                 : [{"deposit":100000, "fee":30}, {"deposit":20000, "fee":40}],
+            "trade_info"          : [
+                {"deposit":100000, "trade_type_id":TradeType.objects.get(name = '전세').id}
+            ],
             "is_maintenance_nego" : 0,
             "room_type_id"        : RoomType.objects.get(name = '원룸').id
 
@@ -703,10 +704,9 @@ class RoomUploadTest(TestCase):
             "is_balcony"          : 0,
             "is_loan"             : 0,
             "is_parking"          : 0,
-            "address"             : "a",
+            "address"             : "서울시",
             "longitude"           : 1.1,
             "latitude"            : 1.1,
-            "trade_type_id"       : TradeType.objects.get(name = '전세').id,
             "is_short_lease"      : 0,
             "room_size"           : 1.1,
             "provision_size"      : 1.1,
@@ -717,11 +717,12 @@ class RoomUploadTest(TestCase):
             "title"               : "title",
             "description"         : "description",
             "image_url"           : "url",
-            "fee_list"            : [{"deposit":100000, "fee":30}, {"deposit":20000, "fee":40}],
-            "user_id"             : User.objects.get(name = 'hyun').id,
+            "trade_info"          : [
+                {"deposit":100000, "trade_type_id":TradeType.objects.get(name = '전세').id}
+            ],
             "is_maintenance_nego" : 0,
             "room_type_id"        : RoomType.objects.get(name = '원룸').id
-
+            
         }
         user = {
           'email': 'hyun@email.com'

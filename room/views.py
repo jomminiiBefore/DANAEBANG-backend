@@ -1,7 +1,7 @@
 import datetime, json
 from haversine              import haversine
 
-from account.my_utils       import requirelogin 
+from account.my_utils       import requirelogin
 from .models                import *
 
 from django.views           import View
@@ -313,7 +313,7 @@ class RoomUploadView(View):
         except KeyError:
             return JsonResponse({'message': 'INVALID_KEY'}, status = 400)
 
-class RoomListView(View):
+class FilteredRoomListView(View):
     def get(self, request):
         try:
             offset    = int(request.GET.get('offset', None)) - 1
@@ -392,8 +392,10 @@ class RoomListView(View):
             return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
         except IndexError:
             return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+        except ValueError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
 
-class ClusterRoomListView(View):
+class RoomListView(View):
     # 클러스터 클릭 방찾기
     def get(self, request):
         try:
@@ -442,3 +444,53 @@ class ClusterRoomListView(View):
             return JsonResponse({"results":rooms}, status = 200)
         except TypeError:
             return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+
+class FilteredPositionListView(View):
+    def get(self, request):
+        try:
+            zoom      = int(request.GET.get('zoom', None))
+            longitude = float(request.GET.get('longitude', None))
+            latitude  = float(request.GET.get('latitude', None))
+            position  = (latitude,longitude)
+            # base_range = 2 -> 상하좌우 각 1 km
+            base_range = 2
+
+            # 방 종류(원룸 / 투쓰리룸 / 오피스텔 / 아파트)
+            multi_room_type   = request.GET.getlist('multi_room_type', None)
+            # 매물 종류(월세 / 전세 / 매매)
+            selling_type      = request.GET.getlist('selling_type', None)
+            selling_type_int  = [int(type) for type in selling_type]
+            deposit_range     = request.GET.getlist('deposit_range', None)
+            fee_range         = request.GET.getlist('fee_range',  None)
+            room_size         = request.GET.getlist('room_size', None)
+            maintenance_price = request.GET.getlist('maintenance_price', None)
+
+            condition = (
+                Q(latitude__range  = (latitude - 0.005 * base_range * zoom, latitude + 0.005 * base_range * zoom))
+                & Q(longitude__range = (longitude - 0.008 * base_range * zoom, longitude + 0.008 * base_range * zoom))
+                & Q(room_type_id__in = multi_room_type)
+                & Q(room_size__range = (int(room_size[0]), int(room_size[1])))
+                & Q(maintenance_price__range = (int(maintenance_price[0]), int(maintenance_price[1])))
+                & Q(tradeinfo__deposit__range = (int(deposit_range[0]), int(deposit_range[1])))
+                & Q(tradeinfo__fee__range = (int(fee_range[0]), int(fee_range[1])))
+                & Q(tradeinfo__trade_type_id__in = selling_type_int)
+            )
+
+            conditioned_rooms = Room.objects.filter(condition).all()
+
+            near_rooms = [room for room in conditioned_rooms
+                          if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
+
+            filtered_rooms   = [{
+                'room_id'           : room.id,
+                'latitude'          : float(room.latitude),
+                'longitude'         : float(room.longitude),
+            } for room in near_rooms[:zoom * 1000]]
+            return JsonResponse({"results":filtered_rooms}, status = 200)
+        except TypeError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+        except IndexError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+        except ValueError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+

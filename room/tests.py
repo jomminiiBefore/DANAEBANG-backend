@@ -1,7 +1,7 @@
 import json
 import jwt
 
-from my_settings      import SECRET
+from my_settings      import SECRET, SMS
 from account.models   import User
 from .models          import *
 
@@ -734,6 +734,90 @@ class RoomUploadTest(TestCase):
         response = client.post('/room/upload', json.dumps(room), content_type='application/json', **headers)
         self.assertEqual(response.status_code, 400)
 
+class FilteredRoomListTest(TestCase):
+    maxDiff = None
+    def setUp(self):
+        roomtype = RoomType.objects.create(
+            id = 1,
+            name = '원룸'
+        )
+
+        tradetype = TradeType.objects.create(
+            id = 1,
+            name = '월세'
+        )
+        floor = Floor.objects.create(
+            name = '1층'
+        )
+        room = Room.objects.create(
+            id = 321,
+            room_size = 33,
+            title = '비싼 집',
+            maintenance_price = 10,
+            latitude = 37.50 ,
+            longitude = 127.04,
+            address = '서울시 강남구 역삼동' ,
+            room_floor = floor,
+            room_type = roomtype 
+        )
+        image_urls= [
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png"
+        ]
+        for image in image_urls:
+            RoomImage.objects.create(
+                image_url = image,
+                room      = room
+            )
+        TradeInfo.objects.create(
+            room = room,
+            deposit = 500,
+            fee     = 40,
+            trade_type = tradetype,
+            id = 1
+        )
+
+    def test_filtered_room_list_success(self):
+        client   = Client()
+        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0&fee_range=200')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+                             "results":[
+                                 {
+                                     "room_id" : 321,
+                                     "is_quick" : False,
+                                     "is_confirmed" : False,
+                                     "confirmed_date" : None,
+                                     "title" : "비싼 집",
+                                     "image_url" :
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
+                                     "room_type_str" : "원룸",
+                                     "floor_str" : "1층",
+                                     "room_size" : "33.00",
+                                     "latitude" : 37.5,
+                                     "longitude" : 127.04,
+                                     "maintenance_price" : 10,
+                                     "trade_type_str" : "월세",
+                                     "trade_deposit" : 500,
+                                     "trade_fee" : 40
+                                 },
+                                 {'room_count': 1},
+                             ]
+                         }
+                        )
+
+    def test_filtered_room_list_invalid_query_parameter(self):
+        client   = Client()
+        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
+        self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_filtered_room_list_value_error(self):
+        client   = Client()
+        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
+        self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
+        self.assertEqual(response.status_code, 400)
+
 class RoomListTest(TestCase):
     maxDiff = None
     def setUp(self):
@@ -778,7 +862,7 @@ class RoomListTest(TestCase):
 
     def test_room_list_success(self):
         client   = Client()
-        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0&fee_range=200')
+        response = client.get('/room/click?offset=1&limit=24&room_id=321')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(),
                          {
@@ -808,11 +892,11 @@ class RoomListTest(TestCase):
 
     def test_room_list_invalid_query_parameter(self):
         client   = Client()
-        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
+        response = client.get('/room/click?limit=24')
         self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
         self.assertEqual(response.status_code, 400)
 
-class ClustRoomListTest(TestCase):
+class FilteredPositionListTest(TestCase):
     maxDiff = None
     def setUp(self):
         roomtype = RoomType.objects.create(
@@ -854,38 +938,30 @@ class ClustRoomListTest(TestCase):
             id = 1
         )
 
-    def test_find_room_success(self):
+    def test_filtered_position_list_success(self):
         client   = Client()
-        response = client.get('/room/cluster?offset=1&limit=24&room_id=321')
+        response = client.get('/room/map?latitude=37.505776&longitude=127.052472&zoom=1&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0&fee_range=200')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(),
                          {
                              "results":[
                                  {
                                      "room_id" : 321,
-                                     "is_quick" : False,
-                                     "is_confirmed" : False,
-                                     "confirmed_date" : None,
-                                     "title" : "비싼 집",
-                                     "image_url" :
-            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
-                                     "room_type_str" : "원룸",
-                                     "floor_str" : "1층",
-                                     "room_size" : "33.00",
                                      "latitude" : 37.5,
                                      "longitude" : 127.04,
-                                     "maintenance_price" : 10,
-                                     "trade_type_str" : "월세",
-                                     "trade_deposit" : 500,
-                                     "trade_fee" : 40
-                                 },
-                                 {'room_count': 1},
+                                 }
                              ]
                          }
                         )
 
-    def test_cluster_room_list_invalid_query_parameter(self):
+    def test_filtered_position_list_invalid_query_parameter(self):
         client   = Client()
-        response = client.get('/room/cluster?limit=24')
+        response = client.get('/room/map?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
+        self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_filtered_position_list_value_error(self):
+        client   = Client()
+        response = client.get('/room/map?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
         self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
         self.assertEqual(response.status_code, 400)

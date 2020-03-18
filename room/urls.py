@@ -3,7 +3,8 @@ from .views      import (
     TradeHistoryView,
     NearInfoView,
     RoomListView,
-    ClusterRoomListView,
+    FilteredRoomListView,
+    FilteredPositionListView,
     RoomUploadView
 )
 
@@ -14,6 +15,7 @@ urlpatterns = [
     path('/trade-history', TradeHistoryView.as_view()),
     path('/near' , NearInfoView.as_view()),
     path('/upload', RoomUploadView.as_view()),
-    path('/list' ,RoomListView.as_view()),
-    path('/cluster', ClusterRoomListView.as_view()),
+    path('/list' ,FilteredRoomListView.as_view()),
+    path('/click', RoomListView.as_view()),
+    path('/map', FilteredPositionListView.as_view()),
 ]

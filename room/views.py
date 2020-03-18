@@ -1,27 +1,9 @@
-import json
-import datetime
+import datetime, json
 from haversine              import haversine
 
 from account.my_utils       import requirelogin 
-from .models                import (
-    Complex, 
-    ComplexSpaceInfo, 
-    ComplexPriceInfo, 
-    EducationInfo, 
-    ConvenienceInfo, 
-    SafetyInfo,
-    Room,
-    RoomAddInfo,
-    RoomImage,
-    TradeInfo,
-    MonthlyTradeInfo,
-    RoomType,
-    TradeType,
-    Floor,
-    HeatType,
-    MovingDateType,
-    RoomSubType
-)
+from .models                import *
+
 from django.views           import View
 from django.http            import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -45,6 +27,8 @@ class DetailView(View):
                     'parking_average'                   : complex.parking_average,
                     'building_num'                      : complex.building_num,
                     'heat_type'                         : complex.heat_type.name,
+                    'fuel_type'                         : complex.fuel_type.name,
+                    'provider_name'                     : complex.provider_name,
                     'lowest_floor'                      : complex.lowest_floor,
                     'highest_floor'                     : complex.highest_floor,
                     'entrance_type'                     : complex.entrance_type.name,
@@ -272,11 +256,11 @@ class RoomUploadView(View):
             'room_sub_type'    : list(RoomSubType.objects.values('name'))
         }
         return JsonResponse(room_info, status = 200)
-        
+
     @requirelogin
     def post(self, request):
         data = json.loads(request.body)
-        
+
         try:
             fee_list      = data.get('fee_list')
             deposit_list  = data.get('deposit_list')
@@ -309,21 +293,13 @@ class RoomUploadView(View):
                 user_id             = request.user.id,
                 is_maintenance_nego = data['is_maintenance_nego'],
                 maintenance_price   = data.get('maintenance_price')
-            ) 
+            )
 
             RoomImage.objects.create(
                 image_url = data['image_url'],
                 room_id   = room.id
             )
 
-            if fee_list:
-                for fee in fee_list:
-                    MonthlyTradeInfo.objects.create(
-                        deposit = fee['deposit'],
-                        fee     = fee['fee'],
-                        room_id = room.id
-                    )
-            
             if deposit_list:
                 for deposit in deposit_list:
                     TradeInfo.objects.create(
@@ -331,8 +307,138 @@ class RoomUploadView(View):
                         trade_type_id = data.get('trade_type_id'),
                         room_id       = room.id
                     )
-              
+
             return HttpResponse(status = 200)
 
         except KeyError:
             return JsonResponse({'message': 'INVALID_KEY'}, status = 400)
+
+class RoomListView(View):
+    def get(self, request):
+        try:
+            offset    = int(request.GET.get('offset', None)) - 1
+            limit     = int(request.GET.get('limit', None)) 
+            zoom      = int(request.GET.get('zoom', None))
+            longitude = float(request.GET.get('longitude', None))
+            latitude  = float(request.GET.get('latitude', None))
+            position  = (latitude,longitude)
+            # base_range = 2 -> 상하좌우 각 1 km
+            base_range = 2
+
+            # 방 종류(원룸 / 투쓰리룸 / 오피스텔 / 아파트)
+            multi_room_type   = request.GET.getlist('multi_room_type', None)
+            # 매물 종류(월세 / 전세 / 매매)
+            selling_type      = request.GET.getlist('selling_type', None)
+            selling_type_int  = [int(type) for type in selling_type]
+            deposit_range     = request.GET.getlist('deposit_range', None)
+            fee_range         = request.GET.getlist('fee_range',  None)
+            room_size         = request.GET.getlist('room_size', None)
+            maintenance_price = request.GET.getlist('maintenance_price', None)
+
+            condition = (
+                Q(latitude__range  = (latitude - 0.005 * base_range * zoom, latitude + 0.005 * base_range * zoom))
+                & Q(longitude__range = (longitude - 0.008 * base_range * zoom, longitude + 0.008 * base_range * zoom))
+                & Q(room_type_id__in = multi_room_type)
+                & Q(room_size__range = (int(room_size[0]), int(room_size[1])))
+                & Q(maintenance_price__range = (int(maintenance_price[0]), int(maintenance_price[1])))
+                & Q(tradeinfo__deposit__range = (int(deposit_range[0]), int(deposit_range[1])))
+                & Q(tradeinfo__fee__range = (int(fee_range[0]), int(fee_range[1])))
+                & Q(tradeinfo__trade_type_id__in = selling_type_int)
+            )
+
+            conditioned_rooms = Room.objects.filter(condition).all()
+
+            near_rooms = [room for room in conditioned_rooms
+                          if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
+            monthly_type_str = TradeType.objects.get(id=1).name
+
+            filtered_rooms   = [{
+                'room_id'           : room.id,
+                'is_quick'          : room.is_quick,
+                'is_confirmed'      : room.is_confirmed,
+                'confirmed_date'    : room.confirmed_date,
+                'title'             : room.title,
+                'image_url'         : room.roomimage_set.first().image_url,
+                'room_type_str'     : room.room_type.name,
+                'floor_str'         : room.room_floor.name,
+                'room_size'         : room.room_size,
+                'latitude'          : float(room.latitude),
+                'longitude'         : float(room.longitude),
+                'maintenance_price' : room.maintenance_price,
+                'trade_type_str'    : (
+                    TradeInfo.objects
+                    .filter(room_id = room.id, trade_type_id__in = selling_type_int)
+                    .last()
+                    .trade_type.name
+                ),
+                'trade_deposit'     : (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = room.id, trade_type_id__in = selling_type_int)
+                    .last()
+                    .deposit
+                ),
+                'trade_fee'         : (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = room.id, trade_type_id__in = selling_type_int)
+                    .last()
+                    .fee
+                ),
+            } for room in near_rooms[offset:limit]]
+            filtered_rooms.append({"room_count" : len(filtered_rooms)})
+            return JsonResponse({"results":filtered_rooms}, status = 200)
+        except TypeError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+        except IndexError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
+
+class ClusterRoomListView(View):
+    # 클러스터 클릭 방찾기
+    def get(self, request):
+        try:
+            offset       = int(request.GET.get('offset', None)) - 1
+            limit        = int(request.GET.get('limit', None)) 
+            room_id      = request.GET.getlist('room_id', None)
+            room_id_list = [int(id) for id in room_id]
+
+            rooms = [{
+                'room_id'           : room.id,
+                'is_quick'          : room.is_quick,
+                'is_confirmed'      : room.is_confirmed,
+                'confirmed_date'    : room.confirmed_date,
+                'title'             : room.title,
+                'image_url'         : room.roomimage_set.first().image_url,
+                'room_type_str'     : room.room_type.name,
+                'floor_str'         : room.room_floor.name,
+                'room_size'         : room.room_size,
+                'latitude'          : float(room.latitude),
+                'longitude'         : float(room.longitude),
+                'maintenance_price' : room.maintenance_price,
+                'trade_type_str'    : (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = room.id)
+                    .first()
+                    .trade_type
+                    .name
+                ),
+                'trade_deposit'     : (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = room.id)
+                    .first()
+                    .deposit
+                ),
+                'trade_fee'         : (
+                    TradeInfo
+                    .objects
+                    .filter(room_id = room.id)
+                    .first()
+                    .fee
+                ),
+            } for room in [Room.objects.get(id = room_id) for room_id in room_id_list[offset:limit]]]
+            rooms.append({"room_count" : len(rooms)})
+            return JsonResponse({"results":rooms}, status = 200)
+        except TypeError:
+            return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)

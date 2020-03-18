@@ -249,19 +249,12 @@ class RoomImage(models.Model):
 
 class TradeInfo(models.Model):
     deposit             = models.IntegerField()
+    fee                 = models.IntegerField(null = True)
     trade_type          = models.ForeignKey(TradeType, on_delete = models.SET_NULL, null = True)
     room                = models.ForeignKey(Room, on_delete = models.CASCADE)
 
     class Meta:
         db_table = 'trade_infos'
-
-class MonthlyTradeInfo(models.Model):
-    deposit             = models.IntegerField()
-    fee                 = models.IntegerField()
-    room                = models.ForeignKey(Room, on_delete = models.CASCADE)
-
-    class Meta:
-        db_table = 'monthly_trade_infos'
 
 class RoomLike(models.Model):
     user                = models.ForeignKey(User, on_delete = models.CASCADE)

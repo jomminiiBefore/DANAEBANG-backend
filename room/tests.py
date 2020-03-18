@@ -1,32 +1,12 @@
 import json
 import jwt
 
-from my_settings import SECRET
-from account.models import User
+from my_settings      import SECRET
+from account.models   import User
+from .models          import *
 
-from .models     import (
-    Complex,
-    ComplexImage,
-    ComplexPriceInfo,
-    ComplexSpaceInfo,
-    ComplexType,
-    EntranceType,
-    HeatType,
-    FuelType,
-    TradeHistory,
-    TradeType,
-    ConvenienceCategory,
-    ConvenienceInfo,
-    SafetyCategory,
-    SafetyInfo,
-    EducationCategory,
-    EducationInfo,
-    RoomType,
-    Floor,
-    MovingDateType
-)
-
-from django.test import TestCase, Client
+from django.db.models import Q
+from django.test      import TestCase, Client
 
 class DetailTest(TestCase):
     maxDiff = None
@@ -42,6 +22,10 @@ class DetailTest(TestCase):
         HeatType.objects.create(
             id = 3,
             name = '중앙난방'
+        )
+        FuelType.objects.create(
+            id = 1,
+            name = '도시가스'
         )
         price_info = ComplexPriceInfo.objects.create(
             trade_average_pyeong_price        = None,
@@ -59,6 +43,8 @@ class DetailTest(TestCase):
             parking_average    = "0.3",
             building_num       = 1,
             heat_type_id       = 3,
+            fuel_type_id       = 1,
+            provider_name      = '대성산업',
             lowest_floor       = 9,
             highest_floor      = 9,
             entrance_type_id   = 1,
@@ -147,6 +133,8 @@ class DetailTest(TestCase):
                                 "parking_average": "0.3",
                                 "building_num": 1,
                                 "heat_type": "중앙난방",
+                                "fuel_type": "도시가스",
+                                "provider_name": "대성산업",
                                 "lowest_floor": 9,
                                 "highest_floor": 9,
                                 "entrance_type": "계단식",
@@ -571,7 +559,6 @@ class NearInfosTest(TestCase):
     def test_near_info_success(self):
         client = Client()
         response = client.get('/room/near?latitude=37.505776&longitude=127.052472')
-        print(response.json())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(),
                          {
@@ -641,7 +628,6 @@ class NearInfosTest(TestCase):
     def test_near_info_fail(self):
         client = Client()
         response = client.get('/room/near?latitude=37.505776&longitude=127.052472')
-        print(response.json())
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.json(),{})
 
@@ -746,4 +732,160 @@ class RoomUploadTest(TestCase):
         token    = jwt.encode({'user_id': user.id}, SECRET['secret'], algorithm = SECRET['algorithm']).decode()
         headers  = {'HTTP_token':token} 
         response = client.post('/room/upload', json.dumps(room), content_type='application/json', **headers)
+        self.assertEqual(response.status_code, 400)
+
+class RoomListTest(TestCase):
+    maxDiff = None
+    def setUp(self):
+        roomtype = RoomType.objects.create(
+            id = 1,
+            name = '원룸'
+        )
+
+        tradetype = TradeType.objects.create(
+            id = 1,
+            name = '월세'
+        )
+        floor = Floor.objects.create(
+            name = '1층'
+        )
+        room = Room.objects.create(
+            id = 321,
+            room_size = 33,
+            title = '비싼 집',
+            maintenance_price = 10,
+            latitude = 37.50 ,
+            longitude = 127.04,
+            address = '서울시 강남구 역삼동' ,
+            room_floor = floor,
+            room_type = roomtype 
+        )
+        image_urls= [
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png"
+        ]
+        for image in image_urls:
+            RoomImage.objects.create(
+                image_url = image,
+                room      = room
+            )
+        TradeInfo.objects.create(
+            room = room,
+            deposit = 500,
+            fee     = 40,
+            trade_type = tradetype,
+            id = 1
+        )
+
+    def test_room_list_success(self):
+        client   = Client()
+        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0&fee_range=200')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+                             "results":[
+                                 {
+                                     "room_id" : 321,
+                                     "is_quick" : False,
+                                     "is_confirmed" : False,
+                                     "confirmed_date" : None,
+                                     "title" : "비싼 집",
+                                     "image_url" :
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
+                                     "room_type_str" : "원룸",
+                                     "floor_str" : "1층",
+                                     "room_size" : "33.00",
+                                     "latitude" : 37.5,
+                                     "longitude" : 127.04,
+                                     "maintenance_price" : 10,
+                                     "trade_type_str" : "월세",
+                                     "trade_deposit" : 500,
+                                     "trade_fee" : 40
+                                 },
+                                 {'room_count': 1},
+                             ]
+                         }
+                        )
+
+    def test_room_list_invalid_query_parameter(self):
+        client   = Client()
+        response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
+        self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
+        self.assertEqual(response.status_code, 400)
+
+class ClustRoomListTest(TestCase):
+    maxDiff = None
+    def setUp(self):
+        roomtype = RoomType.objects.create(
+            id = 1,
+            name = '원룸'
+        )
+
+        tradetype = TradeType.objects.create(
+            id = 1,
+            name = '월세'
+        )
+        floor = Floor.objects.create(
+            name = '1층'
+        )
+        room = Room.objects.create(
+            id = 321,
+            room_size = 33,
+            title = '비싼 집',
+            maintenance_price = 10,
+            latitude = 37.50 ,
+            longitude = 127.04,
+            address = '서울시 강남구 역삼동' ,
+            room_floor = floor,
+            room_type = roomtype 
+        )
+        image_urls= [
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png"
+        ]
+        for image in image_urls:
+            RoomImage.objects.create(
+                image_url = image,
+                room      = room
+            )
+        TradeInfo.objects.create(
+            room = room,
+            deposit = 500,
+            fee     = 40,
+            trade_type = tradetype,
+            id = 1
+        )
+
+    def test_find_room_success(self):
+        client   = Client()
+        response = client.get('/room/cluster?offset=1&limit=24&room_id=321')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+                             "results":[
+                                 {
+                                     "room_id" : 321,
+                                     "is_quick" : False,
+                                     "is_confirmed" : False,
+                                     "confirmed_date" : None,
+                                     "title" : "비싼 집",
+                                     "image_url" :
+            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
+                                     "room_type_str" : "원룸",
+                                     "floor_str" : "1층",
+                                     "room_size" : "33.00",
+                                     "latitude" : 37.5,
+                                     "longitude" : 127.04,
+                                     "maintenance_price" : 10,
+                                     "trade_type_str" : "월세",
+                                     "trade_deposit" : 500,
+                                     "trade_fee" : 40
+                                 },
+                                 {'room_count': 1},
+                             ]
+                         }
+                        )
+
+    def test_cluster_room_list_invalid_query_parameter(self):
+        client   = Client()
+        response = client.get('/room/cluster?limit=24')
+        self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
         self.assertEqual(response.status_code, 400)

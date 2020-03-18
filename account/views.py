@@ -3,10 +3,16 @@ import bcrypt
 import jwt
 import re
 import requests
+import datetime
 
-from my_settings            import SECRET
-from .models                import User, SocialLoginType
+from my_settings            import SECRET, SMS
+from .models                import (
+    User,
+    AuthSMS,
+    SocialLoginType
+)
 
+from random                 import randint
 from django.views           import View
 from django.core.validators import validate_email
 from django.core.validators import ValidationError
@@ -173,3 +179,67 @@ class FacebookSignInView(View):
 
         except KeyError:
            return JsonResponse({'message' : 'INVALID_KEYS'}, status = 400)
+
+class AuthSMSView(View):
+    def post(self, request):
+        try:
+            phone_data  = json.loads(request.body)
+            auth_number = randint(100000, 1000000)
+            auth_data   = AuthSMS.objects.filter(phone_number = phone_data['phone_number'])
+
+            if auth_data.exists():
+                auth_data_update_time   = auth_data.values()[0]['updated_at']
+                time_limit              = datetime.datetime.now() - auth_data_update_time
+
+                if time_limit.seconds < 120:
+                    return HttpResponse(status = 429)
+
+            
+            AuthSMS.objects.update_or_create(
+                phone_number    = phone_data['phone_number'],
+                defaults        = {
+                    'phone_number'  : phone_data['phone_number'],
+                    'auth_code'     : auth_number
+                }
+            )
+
+            headers = {
+                'Content-Type'          : 'application/json; charset=utf-8',
+                'x-ncp-auth-key'        : SMS['ACCESS_KEY'],
+                'x-ncp-service-secret'  : SMS['SERVICE_SECRET']
+            }
+
+            auth_message = {
+                'type'          : 'SMS',
+                'contentType'   : 'COMM',
+                'countryCode'   : '82',
+                'from'          : SMS['FROM'],
+                'to'            : [phone_data['phone_number']],
+                'content'       : f'[다내방] 인증번호는 \'{auth_number}\' 입니다.'
+            }
+
+            requests.post(SMS['URL'], json = auth_message, headers = headers)
+
+            return JsonResponse({'message' : 'SUCCESS'}, status = 200)
+        
+        except KeyError:
+            return JsonResponse({'message' : 'INVALID_KEY'}, status = 400)
+
+
+class AuthSMSConfirmView(View):
+    def post(self, request):
+        try:
+            phone_data  = json.loads(request.body)
+            auth_sms    = AuthSMS.objects.get(phone_number = phone_data['phone_number'])
+            auth_code   = auth_sms.auth_code
+
+            if auth_code == phone_data['auth_code']:
+                return JsonResponse({'message' : 'SUCCESS'}, status = 200)
+            
+            return JsonResponse({'message' : 'INCORRECT_CODE'}, status = 400)
+        
+        except KeyError:
+            return JsonResponse({'message' : 'INVALID_KEY'}, status = 400)
+
+        except AuthSMS.DoesNotExist:
+            return HttpResponse(status = 401)

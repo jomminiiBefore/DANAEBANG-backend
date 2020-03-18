@@ -41,3 +41,11 @@ class BelongedAgent(models.Model):
 
     class Meta:
         db_table = 'belonged_agents'
+
+class AuthSMS(models.Model):
+    phone_number    = models.CharField(max_length = 20)
+    auth_code       = models.IntegerField()
+    updated_at      = models.DateTimeField(auto_now = True)
+
+    class Meta:
+        db_table = 'auth_sms'

@@ -2,9 +2,10 @@ import json
 import json
 import jwt
 import bcrypt
+import time
 
-from my_settings    import SECRET
-from account.models     import User, SocialLoginType
+from my_settings    import SECRET, SMS
+from account.models     import User, SocialLoginType, AuthSMS
 
 from unittest.mock  import patch, MagicMock
 from django.test    import TestCase, Client
@@ -302,5 +303,188 @@ class FacebookSignInViewTest(TestCase):
                     'social_login_id'       : '1293858102939103',
                     'social_login_type_id'  :  SocialLoginType.objects.get(name = 'facebook').id
                 }
+            }
+        )
+
+class AuthSMSViewTest(TestCase):
+    def setUp(self):
+        AuthSMS.objects.create(
+            phone_number    = '01012345678',
+            auth_code       = 123456
+        )
+
+    def tearDown(self):
+        AuthSMS.objects.all().delete()
+
+    def test_auth_sms_view_success(self):
+        time.sleep(120)
+        phone_data = {
+            'phone_number' : '01012345678'
+        }
+
+        client      = Client()
+        response    = client.post('/account/auth-mobile',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'SUCCESS'
+            }
+        )
+
+    def test_auth_sms_view_success2(self):
+        phone_data = {
+            'phone_number' : '01045678900'
+        }
+
+        client      = Client()
+        response    = client.post('/account/auth-mobile',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'SUCCESS'
+            }
+        )
+
+    def test_auth_sms_view_invalid_key(self):
+        phone_data = {
+            'phone' : '01056781234'
+        }
+
+        client      = Client()
+        response    = client.post('/account/auth-mobile',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INVALID_KEY'
+            }
+        )
+
+class AuthSMSConfirmViewTest(TestCase):
+    def setUp(self):
+        AuthSMS.objects.create(
+            phone_number    = '01012345678',
+            auth_code       = 123456
+        )
+    
+    def tearDown(self):
+        AuthSMS.objects.all().delete()
+
+    def test_auth_sms_confirm_view_success(self):
+        phone_data = {
+            'phone_number'  : '01012345678',
+            'auth_code'     : 123456
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'SUCCESS'
+            }
+        )
+
+    def test_auth_sms_confirm_view_incorrect_code(self):
+        phone_data = {
+            'phone_number'  : '01012345678',
+            'auth_code'     : 456789
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INCORRECT_CODE'
+            }
+        )
+
+    def test_auth_sms_confirm_view_invalid_key(self):
+        phone_data = {
+            'phone'     : '01012345678',
+            'auth_code' : 123456
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INVALID_KEY'
+            }
+        )
+
+    def test_auth_sms_confirm_view_not_exist(self):
+        phone_data = {
+            'phone_number'  : '01056781234',
+            'auth_code'     : 567123
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_auth_sms_confirm_view_empty_data(self):
+        phone_data = {
+            'phone_number'  : '',
+            'auth_code'     : ''
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 401)
+
+    def test_auth_sms_confirm_view_empty_phone_number(self):
+        phone_data = {
+            'phone_number'  : '',
+            'auth_code'     : 567123
+        }
+
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+        
+        self.assertEqual(response.status_code, 401)
+
+    def test_auth_sms_confirm_view_empty_auth_code(self):
+        phone_data = {
+            'phone_number'  : '01012345678',
+            'auth_code'     : '',
+        }
+        
+        client      = Client()
+        response    = client.post('/account/mobile-confirm',
+                                  json.dumps(phone_data),
+                                  content_type = 'application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INCORRECT_CODE'
             }
         )

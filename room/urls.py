@@ -5,7 +5,8 @@ from .views      import (
     RoomListView,
     FilteredRoomListView,
     FilteredPositionListView,
-    RoomUploadView
+    RoomUploadView,
+    RoomLikeView
 )
 
 from django.urls import path
@@ -18,4 +19,5 @@ urlpatterns = [
     path('/list' ,FilteredRoomListView.as_view()),
     path('/click', RoomListView.as_view()),
     path('/map', FilteredPositionListView.as_view()),
+    path('/like', RoomLikeView.as_view()),
 ]

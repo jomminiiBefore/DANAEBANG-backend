@@ -9,7 +9,6 @@ from django.http import (
 )
 
 def requirelogin(func):
-    
     def wrapper(self, request, *args, **kwargs):
 
         try:
@@ -31,6 +30,35 @@ def requirelogin(func):
 
         except User.DoesNotExist:
             return JsonResponse({'message': 'INVALID_USER'}, status = 401)
+
+        return func(self, request, *args, **kwargs)
+    return wrapper
+
+def logincheck(func):
+    def wrapper(self, request, *args, **kwargs):
+        token = request.headers.get('token', None)
+        
+        if token: 
+            try:
+                user_id = jwt.decode(
+                    token, 
+                    SECRET['secret'], 
+                    algorithm = SECRET['algorithm']
+                ).get('user_id', None)
+
+                if User.objects.filter(id = user_id).exists():
+                    user = User.objects.get(id = user_id)
+                    request.user = user 
+                else:
+                    return HttpResponse(status = 401)
+
+            except jwt.DecodeError:
+                return JsonResponse({'message': 'INVALID_TOKEN'}, status = 403)
+
+            except User.DoesNotExist:
+                return JsonResponse({'message': 'INVALID_USER'}, status = 401)
+        else:
+            request.user = None
 
         return func(self, request, *args, **kwargs)
     return wrapper

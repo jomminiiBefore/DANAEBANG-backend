@@ -310,7 +310,7 @@ class RoomUploadView(View):
 
             for trade_info in trade_infos:
                 TradeInfo.objects.create(
-                    trade_type_id = trade_info.get('trade_type_id'),
+                    trade_type_id = trade_info['trade_type_id'],
                     deposit       = trade_info['deposit'],
                     fee           = trade_info.get('fee'),
                     room_id       = room.id

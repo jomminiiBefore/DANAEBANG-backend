@@ -354,11 +354,10 @@ class FilteredRoomListView(View):
                 & Q(tradeinfo__trade_type_id__in = selling_type_int)
             )
 
-            conditioned_rooms = Room.objects.filter(condition)
+            conditioned_rooms = Room.objects.filter(condition).distinct()
 
             near_rooms = [room for room in conditioned_rooms
                           if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
-            monthly_type_str = TradeType.objects.get(id=1).name
 
             filtered_rooms   = [{
                 'room_id'           : room.id,
@@ -394,7 +393,7 @@ class FilteredRoomListView(View):
                     .fee
                 ),
             } for room in near_rooms[offset:limit]]
-            filtered_rooms.append({"room_count" : len(filtered_rooms)})
+            filtered_rooms.append({"room_count" : len(near_rooms)})
             return JsonResponse({"results":filtered_rooms}, status = 200)
         except TypeError:
             return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
@@ -484,7 +483,7 @@ class FilteredPositionListView(View):
                 & Q(tradeinfo__trade_type_id__in = selling_type_int)
             )
 
-            conditioned_rooms = Room.objects.filter(condition)
+            conditioned_rooms = Room.objects.filter(condition).distinct()
 
             near_rooms = [room for room in conditioned_rooms
                           if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]

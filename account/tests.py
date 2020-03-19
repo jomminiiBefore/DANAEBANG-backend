@@ -5,7 +5,7 @@ import bcrypt
 import time
 
 from my_settings    import SECRET, SMS
-from account.models     import User, SocialLoginType, AuthSMS
+from account.models import User, SocialLoginType, AuthSMS
 
 from unittest.mock  import patch, MagicMock
 from django.test    import TestCase, Client
@@ -185,7 +185,7 @@ class SignInTest(TestCase):
             }
         )
 
-class KakaoLoginTest(TestCase):
+class KakaoSigninTest(TestCase):
     def setUp(self):
         SocialLoginType.objects.create(name = 'kakao')
         User.objects.create(
@@ -213,7 +213,7 @@ class KakaoLoginTest(TestCase):
         
         client = Client()
         header = {'HTTP_Authorization':'fake.token1'}
-        response = client.get('/account/kakao-login', **header, content_type='applications/json')
+        response = client.get('/account/kakao-signin', **header, content_type='applications/json')
         self.assertEqual(response.status_code, 200)
     
     @patch('account.views.requests')
@@ -229,7 +229,7 @@ class KakaoLoginTest(TestCase):
 
         client = Client()
         header = {'HTTP_Authorization':'fake.token2'}
-        response = client.get('/account/kakao-login', **header, content_type='applications/json')
+        response = client.get('/account/kakao-signin', **header, content_type='applications/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), 
             {

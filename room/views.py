@@ -78,7 +78,7 @@ class TradeHistoryView(View):
             monthly_rent_lists    = [pyeong
                                      .tradehistory_set
                                      .filter(date = date, trade_type_id = 1)
-                                     .all() for date in rent_month]
+                                      for date in rent_month]
 
             lease_month           = [date_dict['date'] for date_dict in pyeong.tradehistory_set
                                      .filter(date__gte = three_year_before, trade_type_id = 2)
@@ -86,7 +86,7 @@ class TradeHistoryView(View):
             monthly_lease_lists   = [pyeong
                                      .tradehistory_set
                                      .filter(date = date, trade_type_id = 2)
-                                     .all() for date in lease_month]
+                                      for date in lease_month]
 
             selling_month         = [date_dict['date'] for date_dict in pyeong.tradehistory_set
                                      .filter(date__gte = three_year_before, trade_type_id = 3)
@@ -94,7 +94,7 @@ class TradeHistoryView(View):
             monthly_selling_lists = [pyeong
                                      .tradehistory_set
                                      .filter(date = date, trade_type_id = 3)
-                                     .all() for date in selling_month]
+                                      for date in selling_month]
 
             results = {
                 'rent_history' : [{
@@ -150,7 +150,6 @@ class NearInfoView(View):
                 ConvenienceInfo
                 .objects
                 .filter(condition)
-                .all()
             )
             near_convenience_infos = [info for info in convenience_infos
                                       if haversine(position, (info.latitude, info.longitude)) <= 2]
@@ -159,7 +158,6 @@ class NearInfoView(View):
                 SafetyInfo
                 .objects
                 .filter(condition)
-                .all()
             )
             near_safety_infos = [info for info in safety_infos
                                  if haversine(position, (info.latitude, info.longitude)) <= 2]
@@ -168,7 +166,6 @@ class NearInfoView(View):
                 EducationInfo
                 .objects
                 .filter(condition)
-                .all()
             )
             near_education_infos = [info for info in education_infos
                                     if haversine(position, (info.latitude, info.longitude)) <= 2]
@@ -357,7 +354,7 @@ class FilteredRoomListView(View):
                 & Q(tradeinfo__trade_type_id__in = selling_type_int)
             )
 
-            conditioned_rooms = Room.objects.filter(condition).all()
+            conditioned_rooms = Room.objects.filter(condition)
 
             near_rooms = [room for room in conditioned_rooms
                           if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
@@ -487,7 +484,7 @@ class FilteredPositionListView(View):
                 & Q(tradeinfo__trade_type_id__in = selling_type_int)
             )
 
-            conditioned_rooms = Room.objects.filter(condition).all()
+            conditioned_rooms = Room.objects.filter(condition)
 
             near_rooms = [room for room in conditioned_rooms
                           if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]

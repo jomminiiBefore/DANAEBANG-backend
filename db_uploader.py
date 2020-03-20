@@ -37,6 +37,15 @@ with open('./resource/BelongedAgent.csv', mode='r') as belonged_agents:
             agent_id = agent[3],
             )
 
+### SocialLoginType
+with open('./resource/SocialLoginType.csv', mode='r') as social_login_types:
+    reader = csv.reader(social_login_types, delimiter=',')
+
+    for type in list(reader)[1:]:
+        SocialLoginType.objects.create(
+            name=type[1],
+            )
+
 ##### 단지 ####
 
 ### FuelType
@@ -159,6 +168,8 @@ with open('./resource/Complex.csv', mode='r') as infos:
             heat_type_id = info[15],
             fuel_type_id = info[16],
             entrance_type_id = info[17],
+            longitude = info[22],
+            latitude = info[23],
             complex_price_info = price
         )
 

@@ -60,8 +60,8 @@ class Complex(models.Model):
         db_table = 'complexes'
 
 class ComplexImage(models.Model):
-    image_url           = models.URLField(max_length = 2000)
-    complex             = models.ForeignKey(Complex, on_delete = models.CASCADE)
+    image_url   = models.URLField(max_length = 2000)
+    complex     = models.ForeignKey(Complex, on_delete = models.CASCADE)
 
     class Meta:
         db_table = 'complex_images'

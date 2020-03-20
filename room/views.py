@@ -142,7 +142,7 @@ class NearInfoView(View):
             latitude  = float(request.GET.get('latitude', None))
             position  = (latitude,longitude)
             condition = (
-                Q(latitude__range  = (latitude - 0.01, latitude + 0.01)) |
+                Q(latitude__range  = (latitude - 0.01, latitude + 0.01)) &
                 Q(longitude__range = (longitude - 0.015, longitude + 0.015))
             )
 

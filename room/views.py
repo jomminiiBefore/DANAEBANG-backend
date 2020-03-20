@@ -243,7 +243,7 @@ class NearInfoView(View):
             latitude  = float(request.GET.get('latitude', None))
             position  = (latitude,longitude)
             condition = (
-                Q(latitude__range  = (latitude - 0.01, latitude + 0.01)) &
+                Q(latitude__range  = (latitude - 0.01, latitude + 0.01)) | 
                 Q(longitude__range = (longitude - 0.015, longitude + 0.015))
             )
 
@@ -275,66 +275,66 @@ class NearInfoView(View):
                 "convenience" : {
                     "subway" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_convenience_infos
                         if info.convenience_category_id == 1],
                     "convenient_store" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_convenience_infos
                         if info.convenience_category_id == 2],
                     "bank" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_convenience_infos
                         if info.convenience_category_id == 4],
                     "mart" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_convenience_infos
                         if info.convenience_category_id == 6],
                     "pharmacy" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_convenience_infos
                         if info.convenience_category_id == 7]
                     },
                 "safety" : {
                     "police" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_safety_infos
                         if info.safety_category_id == 1],
                     "cctv" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_safety_infos
                         if info.safety_category_id == 2]
                     },
                 "education" : {
                     "nursery_school" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_education_infos
                         if info.education_category_id == 1],
                     "kinder_school" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_education_infos
                         if info.education_category_id == 2],
                     "elementary_school" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_education_infos
                         if info.education_category_id == 3],
                     "middle_school" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_education_infos
                         if info.education_category_id == 4],
                     "high_school" : [{
                         "name" : info.name,
-                        "position" : (info.latitude, info.longitude)
+                        "position" : (float(info.latitude), float(info.longitude))
                         } for info in near_education_infos
                         if info.education_category_id == 5]
                     }

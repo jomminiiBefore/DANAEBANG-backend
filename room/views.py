@@ -346,18 +346,6 @@ class NearInfoView(View):
 class RoomUploadView(View):
     def get(self, request):
         room_info = {
-            'room_type'        : list(RoomType.objects.values('name')),
-            'trade_type'       : list(TradeType.objects.values('name')),
-            'floor'            : list(Floor.objects.values('name')),
-            'heat_type'        : list(HeatType.objects.values('name')),
-            'moving_date_type' : list(MovingDateType.objects.values('name')),
-            'room_sub_type'    : list(RoomSubType.objects.values('name'))
-        }
-        return JsonResponse(room_info, status = 200)
-
-class RoomUploadView(View):
-    def get(self, request):
-        room_info = {
             'room_type'        : list(RoomType.objects.values()),
             'trade_type'       : list(TradeType.objects.values()),
             'floor'            : list(Floor.objects.values()),

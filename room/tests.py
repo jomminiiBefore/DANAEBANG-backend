@@ -738,6 +738,12 @@ class RoomUploadTest(TestCase):
 class FilteredRoomListTest(TestCase):
     maxDiff = None
     def setUp(self):
+        user = User.objects.create(
+            name         = 'hyun',
+            email        = 'hyun@email.com',
+            phone_number = '010-0000-0000'
+        )
+
         roomtype = RoomType.objects.create(
             id = 1,
             name = '원룸'
@@ -778,34 +784,35 @@ class FilteredRoomListTest(TestCase):
         )
 
     def test_filtered_room_list_success(self):
+
         client   = Client()
         response = client.get('/room/list?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=1&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0&fee_range=200')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(),
-                         {
-                             "results":[
-                                 {
-                                     "room_id" : 321,
-                                     "is_quick" : False,
-                                     "is_confirmed" : False,
-                                     "confirmed_date" : None,
-                                     "title" : "비싼 집",
-                                     "image_url" :
-            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
-                                     "room_type_str" : "원룸",
-                                     "floor_str" : "1층",
-                                     "room_size" : "33.00",
-                                     "latitude" : 37.5,
-                                     "longitude" : 127.04,
-                                     "maintenance_price" : 10,
-                                     "trade_type_str" : "월세",
-                                     "trade_deposit" : 500,
-                                     "trade_fee" : 40
-                                 },
-                                 {'room_count': 1},
-                             ]
-                         }
-                        )
+                        {
+                            "results":[
+                                {   "is_like" : None,
+                                    "room_id" : 321,
+                                    "is_quick" : False,
+                                    "is_confirmed" : False,
+                                    "confirmed_date" : None,
+                                    "title" : "비싼 집",
+                                    "image_url" :
+                        "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
+                                    "room_type_str" : "원룸",
+                                    "floor_str" : "1층",
+                                    "room_size" : "33.00",
+                                    "latitude" : 37.5,
+                                    "longitude" : 127.04,
+                                    "maintenance_price" : 10,
+                                    "trade_type_str" : "월세",
+                                    "trade_deposit" : 500,
+                                    "trade_fee" : 40
+                                },
+                                {'room_count': 1},
+                            ]
+                        }
+                    )
 
     def test_filtered_room_list_invalid_query_parameter(self):
         client   = Client()
@@ -866,30 +873,31 @@ class RoomListTest(TestCase):
         response = client.get('/room/click?offset=1&limit=24&room_id=321')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(),
-                         {
-                             "results":[
-                                 {
-                                     "room_id" : 321,
-                                     "is_quick" : False,
-                                     "is_confirmed" : False,
-                                     "confirmed_date" : None,
-                                     "title" : "비싼 집",
-                                     "image_url" :
-            "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
-                                     "room_type_str" : "원룸",
-                                     "floor_str" : "1층",
-                                     "room_size" : "33.00",
-                                     "latitude" : 37.5,
-                                     "longitude" : 127.04,
-                                     "maintenance_price" : 10,
-                                     "trade_type_str" : "월세",
-                                     "trade_deposit" : 500,
-                                     "trade_fee" : 40
-                                 },
-                                 {'room_count': 1},
-                             ]
-                         }
-                        )
+                        {
+                            "results":[
+                                {
+                                    "is_like" : None,
+                                    "room_id" : 321,
+                                    "is_quick" : False,
+                                    "is_confirmed" : False,
+                                    "confirmed_date" : None,
+                                    "title" : "비싼 집",
+                                    "image_url" :
+                        "https://d2o59jgeq8ig2.cloudfront.net/complex/default/complex_default_detail2.png",
+                                    "room_type_str" : "원룸",
+                                    "floor_str" : "1층",
+                                    "room_size" : "33.00",
+                                    "latitude" : 37.5,
+                                    "longitude" : 127.04,
+                                    "maintenance_price" : 10,
+                                    "trade_type_str" : "월세",
+                                    "trade_deposit" : 500,
+                                    "trade_fee" : 40
+                                },
+                                {'room_count': 1},
+                            ]
+                        }
+                    )
 
     def test_room_list_invalid_query_parameter(self):
         client   = Client()
@@ -966,3 +974,87 @@ class FilteredPositionListTest(TestCase):
         response = client.get('/room/map?latitude=37.505776&longitude=127.052472&zoom=1&offset=1&limit=24&multi_room_type=1&selling_type=&room_size=0&room_size=50&maintenance_price=0&maintenance_price=10&deposit_range=0&deposit_range=30000&fee_range=0')
         self.assertEqual(response.json(), {"message":"INVALID_QUERY_PARAMETERS"})
         self.assertEqual(response.status_code, 400)
+
+class RoomLikeTest(TestCase):
+    def setUp(self):
+        user = User.objects.create(
+            id           = 1,
+            name         = 'hyun',
+            email        = 'hyun@email.com',
+            phone_number = '010-0000-0000'
+        )
+        room_add_info = RoomAddInfo.objects.create(
+            id                  = 1,
+            is_builtin          = 0,
+            is_elevator         = 0,
+            is_pet              = 0,
+            is_balcony          = 0,
+            is_loan             = 0,
+            is_parking          = 0
+        )
+
+        room_type = RoomType.objects.create(id = 1, name = '원룸')
+
+        room1 = Room.objects.create(
+            id                  = 1,
+            room_add_info_id    = room_add_info.id,
+            room_type_id        = room_type.id,
+            address             = '서울시',
+            longitude           = 1.1,
+            latitude            = 1.1,
+            room_size           = 1.1,
+            title               = 'title',
+            description         = 'description',
+            user_id             = user.id,
+            is_maintenance_nego = 0,
+        )
+
+        room2 = Room.objects.create(
+            id                  = 2,
+            room_add_info_id    = room_add_info.id,
+            room_type_id        = room_type.id,
+            address             = '서울시',
+            longitude           = 1.1,
+            latitude            = 1.1,
+            room_size           = 1.1,
+            title               = 'title',
+            description         = 'description',
+            user_id             = user.id,
+            is_maintenance_nego = 0,
+        )
+
+        RoomLike.objects.create(user_id = user.id, room_id = room1.id)
+
+    def test_room_like_saved(self):
+        user = {
+          'email': 'hyun@email.com'
+        }
+
+        room_id = {
+            'id': Room.objects.get(id=2).id
+        }
+
+        client   = Client()
+        user     = User.objects.get(email = user['email'])
+        token    = jwt.encode({'user_id': user.id}, SECRET['secret'], algorithm = SECRET['algorithm']).decode()
+        headers  = {'HTTP_token':token}
+        response = client.post('/room/like',json.dumps(room_id), content_type='application/json', **headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'message': 'SAVED'})
+
+    def test_room_like_delete(self):
+        user = {
+          'email': 'hyun@email.com'
+        }
+
+        room_id = {
+            'id': Room.objects.get(id=1).id
+        }
+
+        client   = Client()
+        user     = User.objects.get(email = user['email'])
+        token    = jwt.encode({'user_id': user.id}, SECRET['secret'], algorithm = SECRET['algorithm']).decode()
+        headers  = {'HTTP_token':token}
+        response = client.post('/room/like', json.dumps(room_id), content_type='application/json', **headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'message': 'DELETED'})

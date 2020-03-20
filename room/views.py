@@ -1,7 +1,7 @@
 import datetime, json
 from haversine              import haversine
 
-from account.my_utils       import requirelogin
+from account.my_utils       import requirelogin, logincheck
 from .models                import *
 
 from django.views           import View
@@ -322,6 +322,7 @@ class RoomUploadView(View):
             return JsonResponse({'message': 'INVALID_KEY'}, status = 400)
 
 class FilteredRoomListView(View):
+    @logincheck
     def get(self, request):
         try:
             offset    = int(request.GET.get('offset', None)) - 1
@@ -355,11 +356,19 @@ class FilteredRoomListView(View):
             )
 
             conditioned_rooms = Room.objects.filter(condition).distinct()
+            near_rooms        = [
+                room for room in conditioned_rooms
+                if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom
+            ]
 
-            near_rooms = [room for room in conditioned_rooms
-                          if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
-
-            filtered_rooms   = [{
+            filtered_rooms = [{
+                'is_like'           : (
+                    RoomLike.objects
+                    .filter(room_id = room.id, user_id = request.user.id)
+                    .exists() 
+                    if request.user 
+                    else None
+                ),
                 'room_id'           : room.id,
                 'is_quick'          : room.is_quick,
                 'is_confirmed'      : room.is_confirmed,
@@ -404,14 +413,31 @@ class FilteredRoomListView(View):
 
 class RoomListView(View):
     # 클러스터 클릭 방찾기
+    @logincheck
     def get(self, request):
         try:
+            like         = request.GET.get('like')
             offset       = int(request.GET.get('offset', None)) - 1
             limit        = int(request.GET.get('limit', None)) 
             room_id      = request.GET.getlist('room_id', None)
-            room_id_list = [int(id) for id in room_id]
+
+            if like:
+                room_id_list = [
+                    room.id for room in Room
+                    .objects
+                    .filter(room_like = request.user.id)
+                ]
+            else:
+                room_id_list = [int(id) for id in room_id]
 
             rooms = [{
+                'is_like'           : (
+                    RoomLike.objects
+                    .filter(room_id = room.id, user_id = request.user.id)
+                    .exists() 
+                    if request.user 
+                    else None
+                ),
                 'room_id'           : room.id,
                 'is_quick'          : room.is_quick,
                 'is_confirmed'      : room.is_confirmed,
@@ -484,9 +510,10 @@ class FilteredPositionListView(View):
             )
 
             conditioned_rooms = Room.objects.filter(condition).distinct()
-
-            near_rooms = [room for room in conditioned_rooms
-                          if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom]
+            near_rooms        = [
+                room for room in conditioned_rooms
+                if haversine(position, (room.latitude, room.longitude)) <= base_range * zoom
+                ]
 
             filtered_rooms   = [{
                 'room_id'           : room.id,
@@ -501,3 +528,21 @@ class FilteredPositionListView(View):
         except ValueError:
             return JsonResponse({"message":"INVALID_QUERY_PARAMETERS"}, status = 400)
 
+class RoomLikeView(View):
+    @requirelogin
+    def post(self, request):
+        data = json.loads(request.body)
+        
+        try:
+            room_check = RoomLike.objects.filter(room_id = data['id'])
+
+            if room_check.exists():
+                room_check.get().delete()
+                return JsonResponse({'message': 'DELETED'}, status = 200)
+
+            RoomLike.objects.create(room_id = data['id'], user_id = request.user.id)
+            return JsonResponse({'message': 'SAVED'}, status = 200)
+
+        except KeyError:
+            return JsonResponse({'message': 'INVALID_KEY'}, status = 400)
+            

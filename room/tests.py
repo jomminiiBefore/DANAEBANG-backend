@@ -1103,70 +1103,59 @@ class NearInfosTest(TestCase):
         client = Client()
         response = client.get('/room/near?latitude=37.505776&longitude=127.052472')
         self.assertEqual(response.status_code, 200)
+        print(response.json())
         self.assertEqual(response.json(),
                          {
-                             'results':{
+                             'results':
+                             {
                                  'convenience': {
                                      'subway': [{
                                          'name': '역삼역 2호선',
-                                         'position': [
-                                             '37.500674420000003', '127.036469499999995'
-                                         ]}],
+                                         'position': [37.50067442, 127.0364695]
+                                     }],
                                      'convenient_store': [{
                                          'name': 'CU 삼성현대점',
-                                         'position': [
-                                             '37.517299700000002', '127.046857099999997'
-                                         ]}],
+                                         'position': [37.5172997, 127.0468571]
+                                     }],
                                      'bank': [{
                                          'name': '한국씨티은행 역삼동지점',
-                                         'position': [
-                                             '37.499547790000001', '127.031511100000003'
-                                         ]}],
+                                         'position': [37.49954779, 127.0315111]
+                                     }],
                                      'mart': [{
                                          'name': '이마트 역삼점',
-                                         'position': [
-                                             '37.499304209999998', '127.048397399999999'
-                                         ]}],
+                                         'position': [37.49930421, 127.0483974]
+                                     }],
                                      'pharmacy': [{
                                          'name': '강남동물약국',
-                                         'position': [
-                                             '37.494795080000003', '127.040076200000001'
-                                         ]}]},
+                                         'position': [37.49479508, 127.0400762]
+                                     }]},
                                  'safety': {
                                      'police': [{
                                          'name': '논현2파출소',
-                                         'position': [
-                                             '37.521088419999998', '127.053225900000001'
-                                         ]}],
-                                     'cctv': [
-                                     ]},
+                                         'position': [37.52108842, 127.0532259]
+                                     }],
+                                     'cctv': []},
                                  'education': {
                                      'nursery_school': [{
                                          'name': '신한마리오어린이집',
-                                         'position': [
-                                             '37.500674420000003', '127.036469499999995'
-                                         ]}],
+                                         'position': [37.50067442, 127.0364695]
+                                     }],
                                      'kinder_school': [{
                                          'name': '선경유치원',
-                                         'position': [
-                                             '37.517299700000002', '127.046857099999997'
-                                         ]}],
+                                         'position': [37.5172997, 127.0468571]
+                                     }],
                                      'elementary_school': [{
                                          'name': '서울대도초등학교',
-                                         'position': [
-                                             '37.499547790000001', '127.031511100000003'
-                                         ]}],
+                                         'position': [37.49954779, 127.0315111]
+                                     }],
                                      'middle_school': [{
                                          'name': '언주중학교',
-                                         'position': [
-                                             '37.499304209999998', '127.048397399999999'
-                                         ]}],
+                                         'position': [37.49930421, 127.0483974]
+                                     }],
                                      'high_school': [{
                                          'name': '경기고등학교',
-                                         'position': [
-                                             '37.494795080000003', '127.040076200000001'
-                                         ]}]
-                                 }}})
+                                         'position': [37.49479508, 127.0400762]
+                                     }]}}})
 
     def test_near_info_fail(self):
         client = Client()

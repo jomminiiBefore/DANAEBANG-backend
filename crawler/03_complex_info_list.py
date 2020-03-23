@@ -4,10 +4,14 @@ import requests
 
 limit = 9500 
 
-##단지 기본정보
-#complex_info_results =[
-#    {
-#        'complex_id' : 'complex_id',
+#단지 기본정보
+complex_info_results =[
+    {
+        'complex_id' : 'complex_id',
+        'complex_longitude' : 'complex_longitude',
+        'complex_latitude' : 'complex_latitude',
+    }
+]
 #        'complex_name' : 'complex_name',
 #        'fuel_type' : 'fuel_type',
 #        'heat_type' : 'heat_type',
@@ -55,20 +59,23 @@ limit = 9500
 #        'entrance_type' : 'entrance_type'
 #    }
 #]
-#
-#with open('./results/02_room_info_lists.csv', mode = 'r') as room_info_lists:
-#    reader = csv.reader(room_info_lists, delimiter = ',')
-#
-#    for room in list(reader)[1:limit]:
-#        complex_url = room[31]
-#
-#        req = requests.get(f'https://www.dabangapp.com/api/3/complex/detail2?api_version=3.0.1&call_type=web&complex_id={complex_url}')
-#        data = req.json()
-#        comp = data.get('complex')
-#        if comp:
-#            spaces = data['spaces']
-#            complex_dict = {
-#                'complex_id' : complex_url,
+
+with open('./results/02_room_info_lists.csv', mode = 'r') as room_info_lists:
+    reader = csv.reader(room_info_lists, delimiter = ',')
+
+    for room in list(reader)[1:limit]:
+        complex_url = room[31]
+
+        req = requests.get(f'https://www.dabangapp.com/api/3/complex/detail2?api_version=3.0.1&call_type=web&complex_id={complex_url}')
+        data = req.json()
+        comp = data.get('complex')
+        if comp:
+            spaces = data['spaces']
+            complex_dict = {
+                'complex_id' : complex_url,
+                'complex_longitude' : comp['location'][0],
+                'complex_latitude' : comp['location'][1],
+            }
 #                'complex_name' : comp['complex_name'],
 #                'fuel_type' : comp['fuel_type_str'],
 #                'heat_type' : comp['heat_type_str'],
@@ -91,8 +98,8 @@ limit = 9500
 #                'trade_region_average_pyeong_price' : comp['trade_region_average_pyeong_price'],
 #                'lease_region_average_pyeong_price' : comp['lease_region_average_pyeong_price'],
 #            }
-#            complex_info_results.append(complex_dict)
-#
+            complex_info_results.append(complex_dict)
+
 #            for image in comp['images']:
 #                image_info = {
 #                    'complex_id' : complex_url,
@@ -116,14 +123,16 @@ limit = 9500
 #                    'entrance_type'       : space['entrance_type_str']
 #                    }
 #                space_results.append(space_info)
-#
-#with open('./results/03_complex_info_lists.csv', mode = 'w') as complex_info_lists:
-#    complex_writer = csv.writer(complex_info_lists)
-#
-#    for complex in complex_info_results:
-#        complex_writer.writerow(
-#            [
-#                complex['complex_id'],
+
+with open('./results/03_01_complex_location.csv', mode = 'w') as complex_info_lists:
+    complex_writer = csv.writer(complex_info_lists)
+
+    for complex in complex_info_results:
+        complex_writer.writerow(
+            [
+                complex['complex_id'],
+                complex['complex_longitude'],
+                complex['complex_latitude'],
 #                complex['complex_name'],
 #                complex['fuel_type'],
 #                complex['heat_type'],
@@ -145,9 +154,9 @@ limit = 9500
 #                complex['lease_average_pyeong_price'],
 #                complex['trade_region_average_pyeong_price'],
 #                complex['lease_region_average_pyeong_price'],
-#            ]
-#        )
-#
+            ]
+        )
+
 #with open('./results/03_complex_image_lists.csv', mode = 'w') as complex_image_lists:
 #    image_writer = csv.writer(complex_image_lists)
 #

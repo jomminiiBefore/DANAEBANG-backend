@@ -49,6 +49,8 @@ class Complex(models.Model):
     provider_name      = models.CharField(max_length = 45)
     jibun_address      = models.CharField(max_length = 45, null = True)
     road_address       = models.CharField(max_length = 45, null = True)
+    longitude           = models.DecimalField(max_digits = 20, decimal_places = 15)
+    latitude            = models.DecimalField(max_digits = 20, decimal_places = 15)
     complex_type       = models.ForeignKey(ComplexType, on_delete = models.SET_NULL, null = True)
     heat_type          = models.ForeignKey(HeatType, on_delete = models.SET_NULL, null = True)
     fuel_type          = models.ForeignKey(FuelType, on_delete = models.SET_NULL, null = True)

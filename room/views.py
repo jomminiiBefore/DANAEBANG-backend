@@ -21,6 +21,7 @@ class DetailView(View):
                     'complex_id'                        : id,
                     'complex_type'                      : complex.complex_type.name,
                     'address'                           : complex.address,
+                    'location'                          : {"longitude" : complex.longitude, "latitude" : complex.latitude},
                     'name'                              : complex.name,
                     'enter_date'                        : complex.enter_date,
                     'household_num'                     : complex.household_num,

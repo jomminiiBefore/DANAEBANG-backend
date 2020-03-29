@@ -37,7 +37,7 @@ with open('./resource/BelongedAgent.csv', mode='r') as belonged_agents:
             agent_id = agent[3],
             )
 
-### SocialLoginType
+#   SocialLoginType
 with open('./resource/SocialLoginType.csv', mode='r') as social_login_types:
     reader = csv.reader(social_login_types, delimiter=',')
 

@@ -135,21 +135,21 @@ class DetailView(View):
                         'household_num'     : room.complex.household_num,
                         'parking_average'   : room.complex.parking_average
                     }
-                    pyeong = (
+                    pyeong_infos = (
                         room
                         .complex
-                        .complexspaceinfo_set.get(
+                        .complexspaceinfo_set.filter(
                             room_size = room.room_size,
                             provision_size = room.provision_size
                         )
                     )
-                    room_detail['pyeong_infos'] = {
+                    room_detail['pyeong_infos'] = [{
                             'complex_space_info_id'    : pyeong.id,
                             'beds_num'                 : pyeong.beds_num,
                             'bath_num'                 : pyeong.bath_num,
                             'entrance_type'            : pyeong.entrance_type.name,
                             'lay_out_image_URL'        : pyeong.lay_out_image_URL,
-                    }
+                    } for pyeong in pyeong_infos]
 
                 return JsonResponse({"room_detail" : room_detail}, status = 200)
             
